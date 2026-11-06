@@ -1,0 +1,38 @@
+[package]
+name = "ruchoir-http"
+version = "0.1.0"
+description = "The generic HTTP layer every Ruchoir service puts in front of its routes."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+# The versions are those of the products' workspace (`Ruchoir/ruchoir`), declared here rather than in
+# the workspace table because no other crate of this repository uses them yet. Only the features this
+# crate needs are enabled; a service adds its own.
+[dependencies]
+# The web framework every Ruchoir service is built on (tokio-rs community, MIT). Default features:
+# `tokio` is what provides `ConnectInfo`, `json` the extractors a service uses next to this crate.
+axum = "0.8"
+# The `Layer` and `Service` traits the middleware implement (tokio-rs community, MIT).
+tower = "0.5"
+# `SetResponseHeaderLayer`, behind the security headers and the cache policy (tower-rs community,
+# MIT).
+tower-http = { version = "0.7", features = ["set-header"] }
+# The span that carries a request's trace id (tokio-rs community, MIT).
+tracing = "0.1"
+# The body of a Problem Details error (serde community, MIT/Apache-2.0).
+serde = { version = "1", features = ["derive"] }
+serde_json = { workspace = true }
+# Random trace and span ids from the operating system's generator (rust-random community,
+# MIT/Apache-2.0), as the products already use for session ids.
+getrandom = "0.4"
+
+[dev-dependencies]
+# `oneshot` on a router, in the tests (tokio-rs community, MIT).
+tower = { version = "0.5", features = ["util"] }
+# The async test runtime (tokio-rs community, MIT).
+tokio = { version = "1.53", features = ["rt", "macros"] }
+# A subscriber that records the spans a test opens (tokio-rs community, MIT).
+tracing-subscriber = { version = "0.3", default-features = false, features = ["registry", "std"] }
