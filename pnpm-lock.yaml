@@ -8,6 +8,15 @@ importers:
 
   .: {}
 
+  packages/client-base:
+    devDependencies:
+      '@types/node':
+        specifier: ^26.4.0
+        version: 26.6.6
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
   packages/design-system:
     dependencies:
       '@dicebear/core':
@@ -38,6 +47,12 @@ importers:
       react-dom:
         specifier: ^19.2.8
         version: 19.3.1(react@19.3.1)
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
+  packages/permissions-logic:
+    devDependencies:
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
