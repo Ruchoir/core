@@ -1,0 +1,3 @@
+# The TypeScript packages of Ruchoir/core, each published with its own version.
+packages:
+  - "packages/*"
