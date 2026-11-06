@@ -118,12 +118,12 @@ history (`git filter-repo`), moved rather than rewritten.
 | Crate or package | What | From |
 |---|---|---|
 | `crates/ruchoir-permissions` | The permission catalogue, the system roles and the pure resolution engine | `apps/api/src/permissions/{catalogue,engine,system_roles}.rs` |
+| `crates/ruchoir-contract` | `breaking_changes`: what a newer OpenAPI contract breaks for a client of the older one | the `contract` module of `apps/api/src/compat.rs` |
 
 ### What will live here
 
 - Rust crates: the shared HTTP middleware (security headers, CSP, same-site guard, rate limiting,
-  Problem Details errors, trace propagation), the contract test that refuses breaking changes, and
-  the format of server-to-server events.
+  Problem Details errors, trace propagation), and the format of server-to-server events.
 - TypeScript packages: the design system (`@ruchoir/design-system`), the base API client, the
   clients' permission logic, the interface text tooling and shared strings, and the Propolis SDK.
 - They come from `Ruchoir/ruchoir` (`apps/api/src/http.rs`, `apps/api/src/permissions/`,
