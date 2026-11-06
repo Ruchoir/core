@@ -119,13 +119,14 @@ history (`git filter-repo`), moved rather than rewritten.
 |---|---|---|
 | `crates/ruchoir-permissions` | The permission catalogue, the system roles and the pure resolution engine | `apps/api/src/permissions/{catalogue,engine,system_roles}.rs` |
 | `crates/ruchoir-contract` | `breaking_changes`: what a newer OpenAPI contract breaks for a client of the older one | the `contract` module of `apps/api/src/compat.rs` |
+| `packages/design-system` | `@ruchoir/design-system`: tokens, typefaces and React components (its own `AGENTS.md`) | `packages/design-system` |
 
 ### What will live here
 
 - Rust crates: the shared HTTP middleware (security headers, CSP, same-site guard, rate limiting,
   Problem Details errors, trace propagation), and the format of server-to-server events.
-- TypeScript packages: the design system (`@ruchoir/design-system`), the base API client, the
-  clients' permission logic, the interface text tooling and shared strings, and the Propolis SDK.
+- TypeScript packages: the base API client, the clients' permission logic, the interface text
+  tooling and shared strings, and the Propolis SDK.
 - They come from `Ruchoir/ruchoir` (`apps/api/src/http.rs`, `apps/api/src/permissions/`,
   `packages/design-system`, `packages/client`) when this repository is taken up.
 
@@ -155,6 +156,8 @@ This repository's own decisions go in `docs/adr/`.
   `bash "$RULES/scripts/check-conventions.sh" "$RULES/common-rules.md"`, from the root.
 - Rust: `cargo fmt --all --check`, `cargo clippy --all-targets --all-features -- -D warnings`,
   `cargo test --all-features`. The CI runs them through the shared `rust` workflow, with cargo-deny.
+- TypeScript: `pnpm install`, then `pnpm -r typecheck` and `pnpm -r test`. The CI runs them through the
+  shared `node` workflow.
 - A permission name is never renamed or removed, and its position never moves: record an addition
   with `RUCHOIR_UPDATE_CONTRACT=1 cargo test -p ruchoir-permissions the_permission_catalogue_only_grows`.
 
