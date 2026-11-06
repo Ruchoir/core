@@ -1,15 +1,17 @@
 /**
- * The HTTP client behind the data seam.
+ * The HTTP client behind every product's API client.
  *
- * Every call to the Rust API goes through this one helper, so the rules that make the client
+ * Every call to an instance's API goes through this one helper, so the rules that make the client
  * sovereign live in a single place. On the web that is same-origin only, relative paths, and the
- * session cookie (`__Host-ruchoir_session`, HttpOnly) sent automatically: the strict CSP
+ * session cookie (`__Host-` prefixed, HttpOnly) sent automatically: the strict CSP
  * (`connect-src 'self'`) forbids any cross-origin request. In a native app it is the instance the
  * person chose and the bearer from the keychain (see `config.ts`). Callers pass API-relative paths
  * like `/me/spaces` either way.
+ *
+ * The transport knows no product route. What depends on them (which writes are background ones, see
+ * `isBackground` in `config.ts`) is given by the product when it creates its client.
  */
 
-import { isBackgroundWrite } from "./background.ts";
 import { absoluteUrlOf, apiBaseOf, apiOriginOf, authInitOf, clientOptions, type ClientOptions } from "./config.ts";
 
 /**
@@ -55,12 +57,17 @@ export type RequestOptions = {
   json?: unknown;
   /** Abort signal, so a caller (or an unmounting screen) can cancel an in-flight request. */
   signal?: AbortSignal;
+  /**
+   * Whether this request is a background write, said by the caller itself. It wins over the client's
+   * `isBackground` (so `false` keeps a request the list would hold back), and means nothing for a read.
+   */
+  background?: boolean;
 };
 
 /**
  * How a client reaches its instance: the request helpers and URL builders, all reading one set of
- * options. `createClient` builds one per instance; the module-level helpers below are the default
- * client's, over the options `configureClient` sets.
+ * options. A product's client builds one per instance (`makeTransport`); the module-level helpers
+ * below are the default client's, over the options `configureClient` sets.
  */
 export type Transport = {
   /** The options this transport reads, current at each call. */
@@ -101,6 +108,19 @@ function sleep(ms: number, signal?: AbortSignal): Promise<void> {
   });
 }
 
+/**
+ * Whether a request is a background write, for the options of the moment.
+ *
+ * Which writes those are depends on a product's routes, so the product decides: when it creates its
+ * client (`isBackground`), or with the request (`background`). That keeps every product's routes out
+ * of this package, which several products share. A read is never one: the preview holds back writes
+ * only.
+ */
+function isBackgroundWrite(options: ClientOptions, method: Method, path: string, opts: RequestOptions): boolean {
+  if (method === "GET") return false;
+  return opts.background ?? options.isBackground?.({ method, path }) ?? false;
+}
+
 /** A transport over the options `getOptions` returns, read again at every call. */
 export function makeTransport(getOptions: () => ClientOptions): Transport {
   async function apiRequest<T>(method: Method, path: string, opts: RequestOptions = {}): Promise<T> {
@@ -119,7 +139,8 @@ export function makeTransport(getOptions: () => ClientOptions): Transport {
   async function attempt<T>(method: Method, path: string, opts: RequestOptions): Promise<T> {
     const options = getOptions();
     // A preview is read only: what the app writes on its own is not sent (nothing to refuse, nothing to say).
-    if (options.previewActive?.() && isBackgroundWrite({ method, path })) return undefined as T;
+    const background = isBackgroundWrite(options, method, path, opts);
+    if (options.previewActive?.() && background) return undefined as T;
     const auth = authInitOf(options);
     const res = await fetch(`${apiBaseOf(options)}${path}`, {
       method,
@@ -148,7 +169,7 @@ export function makeTransport(getOptions: () => ClientOptions): Transport {
       if (res.status === 401) options.onUnauthorized(errorCodeOf(body));
       if (res.status === 403 && (errorCodeOf(body) === "preview_read_only" || reasonOf(body) === "preview_read_only")) {
         // A background write that still got through before the preview was known is refused in silence.
-        if (!isBackgroundWrite({ method, path })) options.onPreviewReadOnly?.({ method, path });
+        if (!background) options.onPreviewReadOnly?.({ method, path });
       }
       throw new ApiError(res.status, apiErrorMessage(body, res.status), body);
     }
