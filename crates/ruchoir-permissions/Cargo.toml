@@ -1,0 +1,15 @@
+[package]
+name = "ruchoir-permissions"
+version = "0.1.0"
+description = "The permission catalogue and the pure resolution engine shared by every Ruchoir product."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+uuid = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }
