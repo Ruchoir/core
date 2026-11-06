@@ -8,6 +8,15 @@ importers:
 
   .: {}
 
+  packages/client-base:
+    devDependencies:
+      '@types/node':
+        specifier: ^26.4.0
+        version: 26.6.6
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
   packages/design-system:
     dependencies:
       '@dicebear/core':

@@ -1,9 +1,21 @@
-// Run with `pnpm --filter @ruchoir/client test` (Node's own runner, types stripped by Node).
+// Run with `pnpm --filter @ruchoir/client-base test` (Node's own runner, types stripped by Node).
 import { test, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 
-import { apiRequest, configureClient, resetClientForTests } from "../src/index.ts";
+import { configureClient, resetClientForTests } from "../src/config.ts";
+import { apiRequest } from "../src/http.ts";
 import { fakeFetch, header } from "./fakeFetch.ts";
+
+// A product's own list of background writes, as one passes it when it creates its client. The
+// transport knows none: these routes are only the test's.
+function productBackground(request: { method: string; path: string }): boolean {
+  const path = request.path.split("?")[0];
+  if (request.method === "PUT") {
+    return /^\/conversations\/[^/]+\/read$/.test(path) || path === "/notifications/read" || /^\/notifications\/[^/]+\/read$/.test(path) || path === "/push/devices" || path === "/push/subscription";
+  }
+  if (request.method === "POST") return path === "/realtime/typing" || /^\/files\/[^/]+\/office\/heartbeat$/.test(path);
+  return false;
+}
 
 beforeEach(() => resetClientForTests());
 
@@ -63,7 +75,7 @@ test("a_write_refused_by_a_preview_calls_onPreviewReadOnly", async () => {
 test("a_preview_sends_no_background_write_and_toasts_nothing_unasked", async () => {
   const heard: string[] = [];
   let previewing = true;
-  configureClient({ baseUrl: "https://a.test", previewActive: () => previewing, onPreviewReadOnly: (request) => heard.push(`${request.method} ${request.path}`) });
+  configureClient({ baseUrl: "https://a.test", previewActive: () => previewing, isBackground: productBackground, onPreviewReadOnly: (request) => heard.push(`${request.method} ${request.path}`) });
   const background = [
     ["PUT", "/conversations/c1/read"], ["PUT", "/notifications/n1/read?guest_notices=true"], ["PUT", "/notifications/read"],
     ["POST", "/realtime/typing"], ["PUT", "/push/devices"], ["PUT", "/push/subscription"], ["POST", "/files/f1/office/heartbeat?tab=t"],
@@ -111,4 +123,79 @@ test("a_long_wait_is_not_waited_for", async () => {
   const calls = fakeFetch({ status: 429, body: { error: "rate_limited", retry_after: 60 } }, { body: {} });
   await assert.rejects(apiRequest("GET", "/x"), (err: { status: number }) => err.status === 429);
   assert.equal(calls.length, 1);
+});
+
+test("the_product_decides_which_writes_are_background_ones", async () => {
+  const asked: string[] = [];
+  const heard: string[] = [];
+  let previewing = true;
+  configureClient({
+    baseUrl: "https://a.test",
+    previewActive: () => previewing,
+    isBackground: (request) => {
+      asked.push(`${request.method} ${request.path}`);
+      return request.path === "/seen";
+    },
+    onPreviewReadOnly: (request) => heard.push(`${request.method} ${request.path}`),
+  });
+  // The product's answer holds its write back, and it is asked with the request as written.
+  const held = fakeFetch();
+  await apiRequest("PUT", "/seen");
+  assert.equal(held.length, 0);
+  assert.deepEqual(asked, ["PUT /seen"]);
+  // Any other write goes out, and its refusal is heard.
+  fakeFetch({ status: 403, body: { error: "preview_read_only" } });
+  await apiRequest("PUT", "/other").catch(() => {});
+  assert.deepEqual(heard, ["PUT /other"]);
+  // Once sent before the preview was known, its own refusal stays silent.
+  previewing = false;
+  fakeFetch({ status: 403, body: { error: "preview_read_only" } });
+  await apiRequest("PUT", "/seen").catch(() => {});
+  assert.deepEqual(heard, ["PUT /other"]);
+  // A read is never held back, so the product is not even asked about it.
+  previewing = true;
+  asked.length = 0;
+  const reads = fakeFetch({ body: {} });
+  await apiRequest("GET", "/seen");
+  assert.equal(reads.length, 1);
+  assert.deepEqual(asked, []);
+});
+
+test("a_request_can_say_it_is_a_background_write_itself", async () => {
+  const heard: string[] = [];
+  let previewing = true;
+  configureClient({ baseUrl: "https://a.test", previewActive: () => previewing, onPreviewReadOnly: (request) => heard.push(`${request.method} ${request.path}`) });
+  // With no list given, a write that says so is held back during a preview.
+  const held = fakeFetch();
+  await apiRequest("POST", "/typing", { json: {}, background: true });
+  assert.equal(held.length, 0);
+  // A read that says so is still sent: only writes are held back.
+  const reads = fakeFetch({ body: {} });
+  await apiRequest("GET", "/typing", { background: true });
+  assert.equal(reads.length, 1);
+  // Sent before the preview was known, its refusal is silent.
+  previewing = false;
+  fakeFetch({ status: 403, body: { error: "preview_read_only" } });
+  await apiRequest("POST", "/typing", { json: {}, background: true }).catch(() => {});
+  assert.deepEqual(heard, []);
+});
+
+test("what_a_request_says_wins_over_the_products_list", async () => {
+  const heard: string[] = [];
+  configureClient({ baseUrl: "https://a.test", previewActive: () => true, isBackground: () => true, onPreviewReadOnly: (request) => heard.push(`${request.method} ${request.path}`) });
+  // The list holds every write back, but this one says it was asked for: it is sent, and heard.
+  const calls = fakeFetch({ status: 403, body: { error: "preview_read_only" } });
+  await apiRequest("PUT", "/x", { background: false }).catch(() => {});
+  assert.equal(calls.length, 1);
+  assert.deepEqual(heard, ["PUT /x"]);
+});
+
+test("without_a_list_a_preview_holds_nothing_back", async () => {
+  const heard: string[] = [];
+  configureClient({ baseUrl: "https://a.test", previewActive: () => true, onPreviewReadOnly: (request) => heard.push(`${request.method} ${request.path}`) });
+  // This package names no route: a write the old list held back is now the product's to name.
+  const calls = fakeFetch({ status: 403, body: { error: "preview_read_only" } });
+  await apiRequest("PUT", "/conversations/c1/read").catch(() => {});
+  assert.equal(calls.length, 1);
+  assert.deepEqual(heard, ["PUT /conversations/c1/read"]);
 });

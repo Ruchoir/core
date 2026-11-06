@@ -8,8 +8,8 @@
  * keeps in the keychain as a bearer, and never sends a cookie.
  *
  * The module-level options belong to the default client, the one the web uses. An app that talks to
- * several instances at once gives each its own options through `createClient` (`client.ts`); the
- * `...Of(options)` helpers below are what both read.
+ * several instances at once gives each its own options, through a transport of its own
+ * (`makeTransport`, `http.ts`); the `...Of(options)` helpers below are what both read.
  */
 
 export type ClientOptions = {
@@ -35,13 +35,26 @@ export type ClientOptions = {
    * session that ended.
    */
   onUnauthorized: (code?: string) => void;
+  /** Whether the session is looking at a space as a role: background writes are then not sent. */
+  previewActive?: () => boolean;
   /**
    * Called when a write is refused because the session is looking at the space as a role (`403
    * preview_read_only`), before the error is thrown: the app says so once, wherever the write came from.
+   * A background write's refusal is never reported (see `isBackground`).
    */
-  /** Whether the session is looking at a space as a role: background writes are then not sent. */
-  previewActive?: () => boolean;
   onPreviewReadOnly?: (request: { method: string; path: string }) => void;
+  /**
+   * Whether a request is a background write: one the app makes on its own, that nobody asked for
+   * (marking what was read, telling others one is typing, keeping an editor session alive). During a
+   * preview such a write is not sent at all, and if one still reaches the server before the preview
+   * is known, its refusal is silent: only what the person started may speak.
+   *
+   * Which routes those are is the product's knowledge, not the transport's: each product passes its
+   * own list here when it creates its client, so this package names no route. A single request can
+   * also say it itself (`background` in `RequestOptions`, which wins over this). Unset, no request is
+   * a background one. Reads are never held back, whatever this answers.
+   */
+  isBackground?: (request: { method: string; path: string }) => boolean;
   /**
    * Send every multipart upload as one in-memory `ArrayBuffer` (with its own `Content-Type`) instead
    * of a `FormData`. Set by the desktop app only: its webview's custom protocol drops the file-backed
