@@ -1,0 +1,27 @@
+[package]
+name = "ruchoir-events"
+version = "0.1.0"
+description = "The format of Ruchoir's server-to-server events, their signature, and the frame the hub pushes to clients."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+# Serialization framework (serde community project, MIT/Apache-2.0), the version the products use.
+serde = { version = "1", features = ["derive"] }
+# JSON: the bytes an event is signed over, and the free-form payload of a client frame (serde
+# community, MIT/Apache-2.0).
+serde_json = { workspace = true }
+# Event identifiers, the idempotency key (uuid-rs community project, MIT/Apache-2.0).
+uuid = { workspace = true }
+# RFC 3339 timestamps (time-rs community project, MIT/Apache-2.0), the version the products use.
+# `parsing` and `serde` add reading a timestamp back to what the products already format.
+time = { version = "0.3.55", features = ["formatting", "parsing", "serde"] }
+# Ed25519 signatures (ring, community project led by an independent maintainer, Apache-2.0 AND ISC).
+# Already in the products' tree as the rustls crypto provider, chosen over AWS `aws-lc-rs`.
+ring = "0.17.14"
+# Base64url for the signature header (marshallpierce/rust-base64, community, MIT/Apache-2.0).
+# Already in the products' tree. Without default features: 64 bytes need no SIMD path.
+base64 = { version = "0.23.1", default-features = false, features = ["alloc"] }
