@@ -298,7 +298,7 @@ mod tests {
         }
         assert_eq!(
             recorded, current,
-            "the catalogue grew: record it with `RUCHOIR_UPDATE_CONTRACT=1 cargo test -p ruchoir-api the_permission_catalogue_only_grows`"
+            "the catalogue grew: record it with `RUCHOIR_UPDATE_CONTRACT=1 cargo test -p ruchoir-permissions the_permission_catalogue_only_grows`"
         );
     }
 }

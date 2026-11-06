@@ -11,3 +11,6 @@ permissions:
 jobs:
   conventions:
     uses: Ruchoir/.github/.github/workflows/conventions.yml@v1
+
+  rust:
+    uses: Ruchoir/.github/.github/workflows/rust.yml@v1

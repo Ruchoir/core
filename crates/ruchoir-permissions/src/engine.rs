@@ -356,7 +356,7 @@ pub fn resolve(subject: &Subject, chain: &[Level], facts: Facts, explain: bool) 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::permissions::catalogue::Permission::*;
+    use crate::catalogue::Permission::*;
 
     fn set(permissions: &[Permission]) -> PermissionSet {
         PermissionSet::of(permissions)
