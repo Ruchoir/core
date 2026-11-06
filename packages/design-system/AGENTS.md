@@ -1,9 +1,10 @@
 # AGENTS.md - packages/design-system
 
 `@ruchoir/design-system`: Ruchoir's design system as a package. Design tokens, typefaces, and the
-React components with their stylesheet, recreated from the Claude Design handoff. Used by the web
-app (`apps/web`, through the workspace) and by Ruchoir Lab (a separate repository, through a git
-dependency pinned to a tag). See root `AGENTS.md` for project-wide rules.
+React components with their stylesheet, recreated from the Claude Design handoff. It lives in
+`Ruchoir/core` since the restructuring, and every product front uses it. Until they move, the web app
+of `Ruchoir/ruchoir` keeps its own copy (`packages/design-system` there) and Ruchoir Lab installs that
+copy through a git dependency pinned to a tag. See the root `AGENTS.md` for the rules.
 
 ## Layout
 

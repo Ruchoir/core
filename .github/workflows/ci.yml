@@ -16,3 +16,8 @@ jobs:
     uses: Ruchoir/.github/.github/workflows/rust.yml@v1.0.1
     with:
       rules-ref: v1.0.1
+
+  node:
+    uses: Ruchoir/.github/.github/workflows/node.yml@v1.1.0
+    with:
+      scripts: typecheck test

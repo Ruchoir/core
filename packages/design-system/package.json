@@ -2,8 +2,8 @@
   "name": "@ruchoir/design-system",
   "version": "0.1.0",
   "private": true,
-  "description": "The Ruchoir design system: tokens, typefaces and React components, shared by the web app and Ruchoir Lab.",
-  "license": "AGPL-3.0-only",
+  "description": "The Ruchoir design system: tokens, typefaces and React components, shared by every Ruchoir product.",
+  "license": "MIT OR Apache-2.0",
   "type": "module",
   "sideEffects": [
     "*.css"
@@ -43,5 +43,10 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "typescript": "^6.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ruchoir/core",
+    "directory": "packages/design-system"
   }
 }
