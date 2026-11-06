@@ -1,7 +1,8 @@
 /**
  * What no rule, role or setting can ever give a guest, as the engine holds it
- * (`GUEST_CEILING` in `apps/api/src/permissions/system_roles.rs`), grouped into the five sentences
- * the screen says. A test reads the Rust list and fails when one side moves without the other.
+ * (`GUEST_CEILING` in `crates/ruchoir-permissions/src/system_roles.rs`, in this repository), grouped
+ * into the five sentences the screen says. A test reads the Rust list and fails when one side moves
+ * without the other.
  */
 export const GUEST_CEILING = [
   "space.settings",

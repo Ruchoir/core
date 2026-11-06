@@ -1,9 +1,7 @@
-// Run with `pnpm --filter @ruchoir/client test` (Node's own runner, types stripped by Node).
-// Run with `pnpm --filter @ruchoir/web test` (Node's own runner, types stripped by Node).
+// Run with `pnpm --filter @ruchoir/permissions-logic test` (Node's own runner, types stripped by Node).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { dateRefusal, daysLeft, endLabel, expiryTone, keepLabel, presetToInstant, showsEndDate } from "../src/permissionsLogic/guests.ts";
+import { dateRefusal, daysLeft, endLabel, expiryTone, keepLabel, presetToInstant, showsEndDate } from "../src/guests.ts";
 
 const PARIS = "Europe/Paris";
 
@@ -82,39 +80,8 @@ test("labels_read_in_the_locale", () => {
   assert.equal(keepLabel("2026-11-12T10:00:00Z", new Date("2026-11-15T10:00:00Z"), "fr"), "Il y a 3 jours");
 });
 
-type Dict = Record<string, unknown>;
-const LOCALES = ["fr", "en", "de", "es", "it", "pl"];
-function flat(node: unknown, prefix = ""): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(node as Dict)) {
-    if (typeof v === "string") out[prefix + k] = v;
-    else Object.assign(out, flat(v, `${prefix}${k}.`));
-  }
-  return out;
-}
-
-test("every_new_string_exists_in_six_locales", () => {
-  const dicts = Object.fromEntries(
-    LOCALES.map((l) => [l, flat((JSON.parse(readFileSync(new URL(`../../../apps/web/lib/i18n/dictionaries/${l}.json`, import.meta.url), "utf8")) as Dict).guests)]),
-  );
-  const names = Object.keys(dicts.fr).map((k) => k.replace(/_(zero|one|two|few|many|other)$/, ""));
-  assert.ok(Object.keys(dicts.fr).length > 10, "the guests namespace exists");
-  for (const l of LOCALES) {
-    for (const name of new Set(names)) {
-      const has = Object.keys(dicts[l]).some((k) => k === name || k.startsWith(`${name}_`));
-      assert.ok(has, `${l} lacks guests.${name}`);
-    }
-    for (const [k, v] of Object.entries(dicts[l])) {
-      assert.ok(v.trim().length > 0, `${l} guests.${k} is empty`);
-      assert.ok(!v.includes(String.fromCharCode(0x2014)), `${l} guests.${k} has an em dash`);
-    }
-  }
-  // French says vous, never tu.
-  for (const [k, v] of Object.entries(dicts.fr)) assert.ok(!/(?<!\p{L})(tu|ton|ta|tes|toi)(?!\p{L})/iu.test(v), `fr guests.${k} says tu`);
-});
-
 test("a_hand_picked_day_must_be_valid_before_it_can_be_sent", async () => {
-  const { choiceRefusal } = await import("../src/permissionsLogic/guests.ts");
+  const { choiceRefusal } = await import("../src/guests.ts");
   const now = new Date("2026-11-15T09:00:00Z");
   assert.equal(choiceRefusal({ date: "" }, now, PARIS), "empty");
   assert.equal(choiceRefusal({ date: "2026-11-01" }, now, PARIS), "past");
@@ -124,7 +91,7 @@ test("a_hand_picked_day_must_be_valid_before_it_can_be_sent", async () => {
 });
 
 test("guest_and_licence_dates_read_in_the_profile_zone_else_the_device_zone", async () => {
-  const { pickZone } = await import("../src/permissionsLogic/index.ts");
+  const { pickZone } = await import("../src/index.ts");
   assert.equal(pickZone("Asia/Tokyo", "Europe/Paris"), "Asia/Tokyo");
   assert.equal(pickZone(undefined, "Europe/Paris"), "Europe/Paris");
   assert.equal(pickZone("", "Europe/Paris"), "Europe/Paris");

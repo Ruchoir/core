@@ -1,8 +1,8 @@
-// Run with `pnpm --filter @ruchoir/client test` (Node's own runner, types stripped by Node).
+// Run with `pnpm --filter @ruchoir/permissions-logic test` (Node's own runner, types stripped by Node).
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { channelGates } from "../src/permissionsLogic/channelGates.ts";
+import { channelGates } from "../src/channelGates.ts";
 
 const WEB = { legacyPin: "members", legacyDeleteOthers: false } as const;
 const PHONE = { legacyPin: "admins", legacyDeleteOthers: false } as const;
@@ -62,7 +62,7 @@ test("a_channel_without_permissions_on_a_new_instance_uses_the_fallback", () => 
   assert.equal(g.manage, false);
 });
 
-import { createGates } from "../src/permissionsLogic/channelGates.ts";
+import { createGates } from "../src/channelGates.ts";
 
 test("creating_follows_the_space_rights_when_the_server_speaks_them", () => {
   const none = createGates({ role: "member", myPermissions: ["channel.view"] }, true);

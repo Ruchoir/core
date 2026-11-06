@@ -1,7 +1,7 @@
-// Run with `pnpm --filter @ruchoir/client test` (Node's own runner, types stripped by Node).
+// Run with `pnpm --filter @ruchoir/permissions-logic test` (Node's own runner, types stripped by Node).
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { addPeopleLock, additionLock, additionLockKey, appointLock, roleToggleLock, addBlockFor, groupHitsFor, guestCeilingApplies, offersLeaving, offersManagement, removalOf, type PanelGroup } from "../src/permissionsLogic/groupPanel.ts";
+import { addPeopleLock, additionLock, additionLockKey, appointLock, roleToggleLock, addBlockFor, groupHitsFor, guestCeilingApplies, offersLeaving, offersManagement, removalOf, type PanelGroup } from "../src/groupPanel.ts";
 
 const group = (over: Partial<PanelGroup> = {}): PanelGroup => ({
   id: "g1",

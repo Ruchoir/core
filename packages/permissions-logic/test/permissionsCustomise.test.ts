@@ -1,8 +1,8 @@
-// Run with `pnpm --filter @ruchoir/client test` (Node's own runner, types stripped by Node).
+// Run with `pnpm --filter @ruchoir/permissions-logic test` (Node's own runner, types stripped by Node).
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { canCustomise, nextRadio, changedCount, draftOf, groupsOf, locksOf, resultOf, ruleOf, setState, stateOf } from "../src/permissionsLogic/customise.ts";
+import { canCustomise, nextRadio, changedCount, draftOf, groupsOf, locksOf, resultOf, ruleOf, setState, stateOf } from "../src/customise.ts";
 
 test("tristate_maps_to_allow_and_deny", () => {
   let draft = draftOf({ allow: ["message.pin"], deny: ["message.mention_all"] });
