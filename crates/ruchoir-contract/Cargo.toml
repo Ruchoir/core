@@ -1,0 +1,12 @@
+[package]
+name = "ruchoir-contract"
+version = "0.1.0"
+description = "The check that a Ruchoir service's OpenAPI contract only grows inside a major version."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+serde_json = { workspace = true }
