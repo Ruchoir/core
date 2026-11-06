@@ -1,0 +1,1068 @@
+/*
+ * Ruchoir design tokens.
+ *
+ * The palette is the Ruchoir design system's, the one the public site is drawn with: a cool grey
+ * canvas, an ink that does the work of an accent (primary buttons, focus, borders of anything that
+ * floats), and a set of pastels. The product adds one idea to it: a person picks one pastel as their
+ * accent (`--acc`), which paints what is selected, what they are writing into and what is theirs.
+ *
+ * Three layers, in order:
+ *   1. The palette (`--bg`, `--surface`, `--ink`, the pastels): the only raw colours.
+ *   2. The historical ramps (`--grey-*`, `--terracotta-*`, `--teal-*`), kept as aliases onto the
+ *      palette so a rule written against them keeps a sensible colour. New code does not use them.
+ *   3. The semantic tokens (`--surface-*`, `--text-*`, `--action-*`...), which is what components
+ *      read.
+ *
+ * Themes (see the end of this file) change the palette and the accent; everything else follows.
+ * The Tailwind `@theme` block in globals.css mirrors the fonts and the brand colour.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* --- 1. Palette ------------------------------------------------------------------------------ */
+
+  /* Canvas and text. The canvas is never pure white; `--surface` is the lifted plane over it. */
+  --bg: #f6f7f9;
+  --surface: #fdfdfe;
+  --line: #e2e5ea;
+  --line-strong: #cfd3da;
+  /* The outline of any control: 3:1 against both the canvas and the surface. */
+  --control-line: #7d8391;
+  --ink: #15171c;
+  --body: #2e323a;
+  --muted: #5a6070;
+
+  /* Pastels. Text laid on one is always the dark ink (`--on-pastel`), in every theme: grey fails
+     contrast on them, and they stay light in the dark themes. */
+  --sky: #8fd0ff;
+  --mint: #6fe0c2;
+  --violet: #c9a8ff;
+  --pink: #f5b0f0;
+  --peach: #ffb3ba;
+  --lime: #8fe6a3;
+  --sun: #ffd84d;
+  /* Deep partners of three pastels, for text that has to say "done", "careful" or "wrong". */
+  --mint-ink: #0c5a47;
+  --peach-ink: #7a1d27;
+  --sun-ink: #5b4300;
+  /* Reserved colours: the bee yellow (the offset shadow of a pressed primary action), the alarm
+     (what is new and unread) and the brand terracotta (the mark, and the point after the name). */
+  --bee: #fbbf1a;
+  --alarm: #f4522a;
+  --brand: #c65d45;
+
+  /* The accent a theme picks among the pastels, and what is written on it. */
+  --acc: var(--sky);
+  --on-pastel: #15171c;
+  /* What is written on the ink (primary buttons, toasts, tooltips). */
+  --on-ink: #ffffff;
+  --selection: rgb(143 208 255 / 0.55);
+
+  /* --- 2. Historical ramps, aliased onto the palette ------------------------------------------ */
+
+  --grey-0: var(--surface);
+  --grey-25: var(--bg);
+  --grey-50: #eef0f3;
+  --grey-100: var(--line);
+  --grey-200: var(--line-strong);
+  --grey-300: #b4bac4;
+  --grey-400: #9aa1ad;
+  --grey-500: var(--control-line);
+  --grey-600: var(--muted);
+  --grey-700: #3f4450;
+  --grey-800: var(--body);
+  --grey-900: var(--ink);
+
+  /* The former accent ramp: its light end is the chosen pastel, its strong end the ink. */
+  --terracotta-50: color-mix(in srgb, var(--acc) 22%, var(--surface));
+  --terracotta-100: color-mix(in srgb, var(--acc) 45%, var(--surface));
+  --terracotta-200: color-mix(in srgb, var(--acc) 70%, var(--surface));
+  --terracotta-300: var(--acc);
+  --terracotta-400: var(--acc);
+  --terracotta-500: var(--ink);
+  --terracotta-600: var(--ink);
+  --terracotta-700: var(--ink);
+  --terracotta-800: var(--ink);
+  --terracotta-900: var(--ink);
+
+  --teal-500: var(--ink);
+  --teal-600: var(--ink);
+  --teal-700: var(--ink);
+
+  /* Semantic scales, for statuses and syntax colouring. */
+  --green-50: color-mix(in srgb, var(--mint) 18%, var(--surface));
+  --green-100: color-mix(in srgb, var(--mint) 45%, var(--surface));
+  --green-500: #1a9e78;
+  --green-600: #137a5d;
+  --green-700: var(--mint-ink);
+
+  --amber-50: color-mix(in srgb, var(--sun) 22%, var(--surface));
+  --amber-100: color-mix(in srgb, var(--sun) 50%, var(--surface));
+  --amber-500: #a07800;
+  --amber-600: #7d5d00;
+  --amber-700: var(--sun-ink);
+
+  --crimson-50: color-mix(in srgb, var(--peach) 25%, var(--surface));
+  --crimson-100: color-mix(in srgb, var(--peach) 55%, var(--surface));
+  --crimson-500: #c2303f;
+  --crimson-600: #9e2432;
+  --crimson-700: var(--peach-ink);
+
+  --blue-50: color-mix(in srgb, var(--sky) 20%, var(--surface));
+  --blue-100: color-mix(in srgb, var(--sky) 45%, var(--surface));
+  --blue-500: #2c6cb0;
+  --blue-600: #235a94;
+  --blue-700: #1b4f86;
+
+  /* Veils: laid over unknown backgrounds (images, video, hovers). */
+  --alpha-ink-4: rgb(21 23 28 / 0.04);
+  --alpha-ink-8: rgb(21 23 28 / 0.08);
+  --alpha-ink-16: rgb(21 23 28 / 0.16);
+  --alpha-ink-60: rgb(21 23 28 / 0.6);
+  --alpha-paper-70: color-mix(in srgb, var(--bg) 70%, transparent);
+  --alpha-paper-90: color-mix(in srgb, var(--bg) 88%, transparent);
+
+  /* --- Type, space, layout ------------------------------------------------------------------- */
+
+  /*
+   * Type scale, at the "comfort" density (the design system's 1440-calibrated scale was found too
+   * small on wider screens). DS originals were 11/12/13/14/16/18/22.
+   */
+  --text-2xs: 12px;
+  --text-xs: 13px;
+  --text-sm: 14px;
+  --text-md: 15px;
+  /* A message's body, and any field a phone types into (below 16px, iOS zooms in on focus). */
+  --text-base: 16px;
+  --text-lg: 17px;
+  --text-xl: 22px;
+  --text-2xl: 26px;
+  --text-3xl: 32px;
+  --text-4xl: 40px;
+  --text-5xl: 52px;
+
+  --leading-tight: 1.1;
+  --leading-snug: 1.35;
+  --leading-normal: 1.5;
+  --leading-loose: 1.65;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Headings are set tight and bold, as on the site. */
+  --tracking-display: -0.035em;
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  /* Section labels are set in the label face, in sentence case, not in spaced capitals. */
+  --tracking-caps: 0;
+
+  /* Spacing: 4px grid, 2px half-steps for optical adjustments. */
+  --space-0: 0;
+  --space-0-5: 2px;
+  --space-1: 4px;
+  --space-1-5: 6px;
+  --space-2: 8px;
+  --space-2-5: 10px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* Fixed layout templates for the web app. */
+  --rail-width: 64px;
+  --sidebar-width: 268px;
+  --panel-width: 352px;
+  /* Thread panel is wider than the files/members panel: it holds a conversation. */
+  --thread-width: 432px;
+  /* Drives every top bar (wordmark, channel header, panel heads) so they align. */
+  --topbar-height: 56px;
+  --composer-min-height: 48px;
+  --content-max-width: 720px;
+  --hit-target: 36px;
+
+  /*
+   * The channel feed uses a wider reading measure than the document measure (--content-max-width).
+   * A chat feed is not a document; 720px left too much idle horizontal space. Kept centred.
+   */
+  --channel-measure: 960px;
+
+  /* Radii, the design system's. */
+  --radius-xs: 3px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 999px;
+
+  --border-width: 1.5px;
+  --border-width-strong: 2px;
+
+  /*
+   * Elevation: nothing floats on a blur. What floats has an ink edge and a hard offset shadow, the
+   * way a sticker sits on a page; the bigger the thing, the further the offset.
+   */
+  --shadow-none: none;
+  --shadow-offset-sm: 3px 3px 0 var(--ink);
+  --shadow-popover: 4px 4px 0 var(--ink);
+  --shadow-dialog: 8px 8px 0 var(--ink);
+  --shadow-inset-top: inset 0 1px 0 var(--line);
+  /* The lift of a primary action under the pointer: a bee-yellow offset. */
+  --shadow-lift: 4px 4px 0 var(--bee);
+  /*
+   * The other offsets the components draw, each named after its role. A simplified style turns
+   * every one of them off; the Ruchoir style keeps these values.
+   */
+  --shadow-lift-sm: 3px 3px 0 var(--bee);
+  --shadow-lift-lg: 8px 8px 0 var(--bee);
+  --shadow-accent: 4px 4px 0 var(--acc);
+  --shadow-editing: 4px 4px 0 var(--peach);
+  --shadow-ring-offset: 0 0 0 2px var(--ink), 3px 3px 0 2px var(--ink);
+  --shadow-ring-offset-sm: 0 0 0 1.5px var(--ink), 2px 2px 0 1.5px var(--ink);
+
+  /* Lifts: how far something moves under the pointer, and how far it sinks when pressed. */
+  --lift: translate(-2px, -2px);
+  --lift-sm: translate(-1px, -1px);
+  --lift-y-sm: translateY(-1px);
+  --press: translate(3px, 3px);
+
+  /*
+   * Ink edges. `--edge-float` is the resting edge of what floats (a popover, a menu, a dialog, the
+   * composer, a card); `--edge-focus` is the edge or outline that marks hover, focus, selection and
+   * the active control. A token holding `var(--ink)` is resolved here, at the root: a block that
+   * redefines `--ink` below it (`.wc-pastel`) restates these too.
+   */
+  --edge-float: var(--ink);
+  --edge-focus: var(--ink);
+
+  /* Labels, hints, times and keys: the interface face. Monospace is for code only. */
+  --label-font: var(--font-sans);
+
+  /* Square avatars; a round one (`.wc-av--round`) keeps the full radius. */
+  --avatar-radius: var(--radius-sm);
+
+  --ring-width: 2px;
+  --ring-offset: 2px;
+  --focus-ring: 0 0 0 var(--ring-offset) var(--bg),
+    0 0 0 calc(var(--ring-offset) + var(--ring-width)) var(--ink);
+
+  /* Motion: short. The only bounce is on small things arriving (a badge, a reaction). */
+  --duration-instant: 80ms;
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --duration-slow: 260ms;
+
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.45, 0.05, 0.55, 0.95);
+  --ease-entrance: cubic-bezier(0.16, 0.84, 0.44, 1);
+  --ease-spring: cubic-bezier(0.3, 1.6, 0.5, 1);
+
+  /* --- 3. Semantic tokens --------------------------------------------------------------------- */
+
+  /* Surfaces */
+  --surface-canvas: var(--bg);
+  --surface-sunken: var(--grey-50);
+  --surface-card: var(--surface);
+  --surface-raised: var(--surface);
+  --surface-chrome: var(--surface);
+  --surface-inverse: var(--ink);
+  --surface-hover: rgb(21 23 28 / 0.05);
+  --surface-active: rgb(21 23 28 / 0.09);
+  --surface-selected: color-mix(in srgb, var(--acc) 30%, var(--surface));
+  --surface-mention: color-mix(in srgb, var(--acc) 18%, transparent);
+  --surface-disabled: var(--grey-50);
+  --scrim: rgb(21 23 28 / 0.55);
+
+  /* Text */
+  --text-strong: var(--ink);
+  --text-body: var(--body);
+  --text-muted: var(--muted);
+  /* The muted grey clears WCAG AA on the canvas and on the sunken surface alike (6.1:1 / 5.6:1). */
+  --text-subtle: var(--muted);
+  --text-disabled: #9aa1ad;
+  --text-inverse: var(--on-ink);
+  --text-accent: var(--ink);
+  /* A link reads as one before it is pointed at: its own colour, the underline only under the pointer.
+     The theme's accent, deepened towards the ink by day so it holds as text (a pastel alone is too pale
+     on the light canvas: about 6:1 once mixed). At night the pastel is readable as it is. */
+  --text-link: color-mix(in srgb, var(--acc) 40%, var(--ink));
+  --text-link-hover: var(--text-link);
+
+  /* Lines */
+  --border-subtle: var(--line);
+  --border-default: var(--line-strong);
+  --border-strong: var(--control-line);
+  --border-inverse: rgb(255 255 255 / 0.18);
+  --border-accent: var(--ink);
+
+  /* Primary action: the ink, lifted on a bee-yellow shadow under the pointer. */
+  --action-primary-bg: var(--ink);
+  --action-primary-bg-hover: var(--ink);
+  --action-primary-bg-active: var(--ink);
+  --action-primary-fg: var(--on-ink);
+
+  /* Secondary action: outlined in ink, on nothing. */
+  --action-secondary-bg: transparent;
+  --action-secondary-bg-hover: var(--bg);
+  --action-secondary-bg-active: var(--grey-50);
+  --action-secondary-fg: var(--ink);
+  --action-secondary-border: var(--ink);
+
+  /* Ghost action */
+  --action-ghost-bg-hover: rgb(21 23 28 / 0.06);
+  --action-ghost-bg-active: rgb(21 23 28 / 0.1);
+  --action-ghost-fg: var(--body);
+
+  /* Destructive action: the peach pastel, with the dark ink on it, as every pastel. */
+  --action-danger-bg: var(--peach);
+  --action-danger-bg-hover: var(--peach);
+  --action-danger-fg: var(--on-pastel);
+
+  /* Feedback states */
+  --status-success-fg: var(--mint-ink);
+  --status-success-bg: color-mix(in srgb, var(--mint) 22%, var(--surface));
+  --status-success-border: var(--mint);
+  --status-warning-fg: var(--sun-ink);
+  --status-warning-bg: color-mix(in srgb, var(--sun) 25%, var(--surface));
+  --status-warning-border: var(--sun);
+  --status-danger-fg: var(--peach-ink);
+  --status-danger-bg: color-mix(in srgb, var(--peach) 28%, var(--surface));
+  --status-danger-border: var(--peach);
+  --status-info-fg: var(--blue-700);
+  --status-info-bg: color-mix(in srgb, var(--sky) 22%, var(--surface));
+  --status-info-border: var(--sky);
+
+  /* Presence: avatar dots */
+  --presence-online: #1a9e78;
+  --presence-away: #f0b400;
+  --presence-busy: var(--alarm);
+  --presence-offline: var(--line-strong);
+
+  /* Import provenance (Nextcloud, Slack, Mattermost): grey, never coloured. */
+  --import-source-fg: var(--muted);
+  --import-source-bg: var(--grey-50);
+
+  /* Panes: the rail of spaces and the sidebar, and the item selected in it. */
+  --sidebar-bg: var(--surface-chrome);
+  --sidebar-selected-bg: var(--acc);
+  --sidebar-selected-fg: var(--on-pastel);
+  --rail-bg: var(--surface-canvas);
+
+  /* Message density: the avatar's distance to the text, and the row's padding. */
+  --msg-gap: 14px;
+  --msg-pad-x: 8px;
+  --msg-pad-top: 6px;
+  --msg-pad-top-grouped: 2px;
+  /* A message drawn as a card (a simplified style): its fill, its edge and the room under it. */
+  --msg-bg: transparent;
+  --msg-edge: none;
+  --msg-space: 0px;
+  --radius-msg: var(--radius-md);
+
+  /* Shapes a style changes apart from the radius scale: buttons, rows of a list, a space's tile. */
+  --radius-control: var(--radius-md);
+  --radius-item: var(--radius-sm);
+  --radius-space: var(--radius-md);
+  /* The width of the edge of what floats (the ink edge by default, a hairline in a simplified style). */
+  --edge-width: 2px;
+  /* A count of what is unread. */
+  --badge-bg: var(--action-primary-bg);
+  --badge-fg: var(--action-primary-fg);
+  /* The small tilt of a space and of a row's icon under the pointer. */
+  --tilt: rotate(-6deg) scale(1.06);
+  --tilt-icon: scale(1.15) rotate(-6deg);
+  /* A mark beside the selected row of the sidebar (a bar at its start in a simplified style). */
+  --sidebar-selected-mark: none;
+}
+
+/* Base reset. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+::selection {
+  background: var(--selection);
+  color: inherit;
+}
+::placeholder {
+  color: var(--text-subtle);
+}
+
+/* ============================================================================
+ * Themes
+ *
+ * Eight themes: four accents (sky, mint, violet, pink), each by day and by night. The bare :root
+ * above is the default, "sky" by day. A theme is selected by setting data-theme on <html> (see
+ * SettingsProvider and the pre-paint script in layout.tsx): its name is the accent, followed by
+ * `-dark` for the night version. The two halves are independent, so the accent and the night are
+ * each written once.
+ * ========================================================================== */
+
+/* --- Accents --------------------------------------------------------------- */
+[data-theme^="mint"] {
+  --acc: var(--mint);
+}
+[data-theme^="violet"] {
+  --acc: var(--violet);
+}
+[data-theme^="pink"] {
+  --acc: var(--pink);
+}
+
+/* --- Night: the same palette on a near-black canvas ------------------------ */
+[data-theme$="-dark"] {
+  color-scheme: dark;
+
+  --bg: #15171c;
+  --surface: #1d2027;
+  --line: #2e323a;
+  --line-strong: #3f4450;
+  --control-line: #7d8391;
+  /* The ink turns light: it is still what a primary action and a floating edge are drawn in. */
+  --ink: #f6f7f9;
+  --body: #dfe2e7;
+  --muted: #a7adb8;
+  --on-ink: #15171c;
+  --selection: rgb(143 208 255 / 0.33);
+  --text-link: var(--acc);
+
+  --grey-50: #23262e;
+  --grey-300: #4a4f5a;
+  --grey-400: #6b717d;
+  --grey-700: #c9ced6;
+
+  --blue-700: var(--sky);
+  --green-700: var(--mint);
+
+  --alpha-ink-4: rgb(255 255 255 / 0.05);
+  --alpha-ink-8: rgb(255 255 255 / 0.1);
+  --alpha-ink-16: rgb(255 255 255 / 0.16);
+
+  --surface-hover: rgb(255 255 255 / 0.05);
+  --surface-active: rgb(255 255 255 / 0.09);
+  --surface-selected: color-mix(in srgb, var(--acc) 22%, var(--surface));
+  --surface-mention: color-mix(in srgb, var(--acc) 12%, transparent);
+  --action-ghost-bg-hover: rgb(255 255 255 / 0.07);
+  --action-ghost-bg-active: rgb(255 255 255 / 0.11);
+  --scrim: rgb(0 0 0 / 0.66);
+  --text-disabled: #6b717d;
+
+  /* A shadow cannot be lighter than what it falls on: on the night canvas it is black. */
+  --shadow-offset-sm: 3px 3px 0 #000;
+  --shadow-popover: 4px 4px 0 #000;
+  --shadow-dialog: 8px 8px 0 #000;
+
+  /* Statuses: the pastels themselves read on the dark canvas. */
+  --status-success-fg: var(--mint);
+  --status-success-bg: color-mix(in srgb, var(--mint) 14%, var(--surface));
+  --status-success-border: color-mix(in srgb, var(--mint) 45%, transparent);
+  --status-warning-fg: var(--sun);
+  --status-warning-bg: color-mix(in srgb, var(--sun) 12%, var(--surface));
+  --status-warning-border: color-mix(in srgb, var(--sun) 45%, transparent);
+  --status-danger-fg: var(--peach);
+  --status-danger-bg: color-mix(in srgb, var(--peach) 14%, var(--surface));
+  --status-danger-border: color-mix(in srgb, var(--peach) 45%, transparent);
+  --status-info-fg: var(--sky);
+  --status-info-bg: color-mix(in srgb, var(--sky) 14%, var(--surface));
+  --status-info-border: color-mix(in srgb, var(--sky) 45%, transparent);
+
+  --border-inverse: rgb(21 23 28 / 0.18);
+}
+
+/* ============================================================================
+ * Simplified styles
+ *
+ * A person may trade the Ruchoir style for a flat one: `data-style` on <html> (see SettingsProvider
+ * and the pre-paint script), beside `data-theme`, which keeps the accent and the night. No attribute
+ * is the Ruchoir style. Each style is a shape block (radii, density) and two colour blocks, one by
+ * day and one by night, which set the same names: a colour of the day never reaches the night. The
+ * sidebar and the rail are coloured through their hooks (`wc-pane-sidebar`, `wc-pane-rail`), and
+ * what floats inside a pane takes the content's colours back. These blocks come after the accents
+ * and the night on purpose: at the same specificity, a style wins.
+ * ========================================================================== */
+
+/* --- The flat layer, shared by every style --------------------------------- */
+[data-style] {
+  /* Nothing is lifted onto an offset shadow, nothing moves under the pointer. */
+  --shadow-offset-sm: none;
+  --shadow-popover: none;
+  --shadow-dialog: none;
+  --shadow-lift: none;
+  --shadow-lift-sm: none;
+  --shadow-lift-lg: none;
+  --shadow-accent: none;
+  --shadow-editing: none;
+  /* A ring without its offset, in the focus colour. */
+  --shadow-ring-offset: 0 0 0 2px var(--edge-focus);
+  --shadow-ring-offset-sm: 0 0 0 1.5px var(--edge-focus);
+  --lift: none;
+  --lift-sm: none;
+  --lift-y-sm: none;
+  --press: none;
+  --tilt: none;
+  --tilt-icon: none;
+  /* What floats is edged with a grey hairline, not the ink. The focus ring keeps its width. */
+  --edge-float: var(--line-strong);
+  --border-width: 1px;
+  --border-width-strong: 1px;
+  --edge-width: 1px;
+  --action-secondary-border: var(--control-line);
+  --focus-ring: 0 0 0 var(--ring-offset) var(--bg),
+    0 0 0 calc(var(--ring-offset) + var(--ring-width)) var(--edge-focus);
+  /* The content's values, kept for what floats inside a coloured pane (see the end of this file). */
+  --float-text-strong: var(--text-strong);
+  --float-text-body: var(--text-body);
+  --float-text-muted: var(--text-muted);
+  --float-text-subtle: var(--text-subtle);
+  --float-surface-hover: var(--surface-hover);
+  --float-surface-active: var(--surface-active);
+  --float-border-subtle: var(--border-subtle);
+  --float-surface-canvas: var(--surface-canvas);
+  --float-line-strong: var(--line-strong);
+  --float-edge-focus: var(--edge-focus);
+  --float-badge-bg: var(--badge-bg);
+  --float-badge-fg: var(--badge-fg);
+  --float-action-ghost-fg: var(--action-ghost-fg);
+  --float-action-ghost-bg-hover: var(--action-ghost-bg-hover);
+  --float-action-ghost-bg-active: var(--action-ghost-bg-active);
+  --float-surface-chrome: var(--surface-chrome);
+  --float-surface-card: var(--surface-card);
+  --float-line: var(--line);
+  --float-border-default: var(--border-default);
+  --float-shadow-ring-offset: var(--shadow-ring-offset);
+  --float-shadow-ring-offset-sm: var(--shadow-ring-offset-sm);
+  --float-focus-ring: var(--focus-ring);
+  --float-edge-float: var(--edge-float);
+}
+
+/* --- Aubergine: a plum sidebar, tight messages ----------------------------- */
+[data-style="aubergine"] {
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-control: 4px;
+  --radius-item: 6px;
+  --radius-space: 8px;
+  --avatar-radius: 6px;
+  --msg-gap: 10px;
+  --msg-pad-x: 8px;
+  --msg-pad-top: 6px;
+  --msg-pad-top-grouped: 2px;
+  --msg-space: 0px;
+  --sidebar-selected-mark: none;
+}
+[data-style="aubergine"]:not([data-theme$="-dark"]) {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-chrome: #ffffff;
+  --line: #e2e2e2;
+  --line-strong: #d6d6d6;
+  --ink: #1d1c1d;
+  --body: #1d1c1d;
+  --muted: #616061;
+  --text-link: #1264a3;
+  --surface-mention: #fdf4e3;
+  --action-primary-bg: #007a5a;
+  --action-primary-bg-hover: #007a5a;
+  --action-primary-bg-active: #007a5a;
+  --action-primary-fg: #ffffff;
+  --edge-focus: #1264a3;
+  --sidebar-bg: #4a154b;
+  --sidebar-selected-bg: #1164a3;
+  --sidebar-selected-fg: #ffffff;
+  --rail-bg: #3a0e3b;
+  --badge-bg: #cd2553;
+  --badge-fg: #ffffff;
+  --msg-bg: transparent;
+  --msg-edge: none;
+  --acc: #b9d7f0;
+  --control-line: #868686;
+}
+[data-style="aubergine"][data-theme$="-dark"] {
+  --bg: #1a1d21;
+  --surface: #222529;
+  --surface-chrome: #1a1d21;
+  --line: #35373b;
+  --line-strong: #3c3e42;
+  --ink: #f2f2f2;
+  --body: #d1d2d3;
+  --muted: #9a9b9e;
+  --text-link: #4ea4e8;
+  --surface-mention: #3a3220;
+  --action-primary-bg: #007a5a;
+  --action-primary-bg-hover: #007a5a;
+  --action-primary-bg-active: #007a5a;
+  --action-primary-fg: #ffffff;
+  --edge-focus: #4ea4e8;
+  --sidebar-bg: #19171d;
+  --sidebar-selected-bg: #1164a3;
+  --sidebar-selected-fg: #ffffff;
+  --rail-bg: #121016;
+  --badge-bg: #cd2553;
+  --badge-fg: #ffffff;
+  --msg-bg: transparent;
+  --msg-edge: none;
+  --acc: #b9d7f0;
+  --control-line: #6e6e6e;
+}
+[data-style="aubergine"]:not([data-theme$="-dark"]) .wc-pane-sidebar {
+  --text-strong: #ffffff;
+  --text-body: #d8c8d9;
+  --text-muted: #c6b3c7;
+  --text-subtle: #c6b3c7;
+  --surface-hover: rgb(255 255 255 / 0.08);
+  --surface-active: rgb(255 255 255 / 0.14);
+  --border-subtle: rgb(255 255 255 / 0.12);
+  --action-ghost-fg: #d8c8d9;
+  --action-ghost-bg-hover: rgb(255 255 255 / 0.08);
+  --action-ghost-bg-active: rgb(255 255 255 / 0.14);
+  /* What the pane draws on: a count, a tag, the ring of a presence dot, the keyboard focus. */
+  --surface-chrome: #4a154b;
+  --surface-card: rgb(255 255 255 / 0.1);
+  --line: rgb(255 255 255 / 0.16);
+  --border-default: rgb(255 255 255 / 0.24);
+  --edge-focus: #ffffff;
+  /* Declared again here so they resolve with the pane's focus colour, not the content's. */
+  --shadow-ring-offset: 0 0 0 2px var(--edge-focus);
+  --shadow-ring-offset-sm: 0 0 0 1.5px var(--edge-focus);
+  --focus-ring: 0 0 0 var(--ring-offset) var(--bg),
+    0 0 0 calc(var(--ring-offset) + var(--ring-width)) var(--edge-focus);
+}
+[data-style="aubergine"][data-theme$="-dark"] .wc-pane-sidebar {
+  --text-strong: #ffffff;
+  --text-body: #bcbcbe;
+  --text-muted: #9a9b9e;
+  --text-subtle: #9a9b9e;
+  --surface-hover: rgb(255 255 255 / 0.08);
+  --surface-active: rgb(255 255 255 / 0.14);
+  --border-subtle: rgb(255 255 255 / 0.12);
+  --action-ghost-fg: #bcbcbe;
+  --action-ghost-bg-hover: rgb(255 255 255 / 0.08);
+  --action-ghost-bg-active: rgb(255 255 255 / 0.14);
+  /* What the pane draws on: a count, a tag, the ring of a presence dot, the keyboard focus. */
+  --surface-chrome: #19171d;
+  --surface-card: rgb(255 255 255 / 0.1);
+  --line: rgb(255 255 255 / 0.16);
+  --border-default: rgb(255 255 255 / 0.24);
+  --edge-focus: #ffffff;
+  /* Declared again here so they resolve with the pane's focus colour, not the content's. */
+  --shadow-ring-offset: 0 0 0 2px var(--edge-focus);
+  --shadow-ring-offset-sm: 0 0 0 1.5px var(--edge-focus);
+  --focus-ring: 0 0 0 var(--ring-offset) var(--bg),
+    0 0 0 calc(var(--ring-offset) + var(--ring-width)) var(--edge-focus);
+}
+[data-style="aubergine"]:not([data-theme$="-dark"]) .wc-pane-rail {
+  --text-muted: #c6b3c7;
+  --text-subtle: #c6b3c7;
+  --surface-canvas: #3a0e3b;
+  --line-strong: rgb(255 255 255 / 0.3);
+  --edge-focus: #ffffff;
+  --border-subtle: rgb(255 255 255 / 0.12);
+  --action-ghost-fg: #c6b3c7;
+  --action-ghost-bg-hover: rgb(255 255 255 / 0.08);
+  --action-ghost-bg-active: rgb(255 255 255 / 0.14);
+  /* Declared again here so they resolve with the rail's own colours, not the content's. */
+  --edge-float: var(--line-strong);
+  --shadow-ring-offset: 0 0 0 2px var(--edge-focus);
+  --shadow-ring-offset-sm: 0 0 0 1.5px var(--edge-focus);
+  --focus-ring: 0 0 0 var(--ring-offset) var(--bg),
+    0 0 0 calc(var(--ring-offset) + var(--ring-width)) var(--edge-focus);
+}
+[data-style="aubergine"][data-theme$="-dark"] .wc-pane-rail {
+  --text-muted: #9a9b9e;
+  --text-subtle: #9a9b9e;
+  --surface-canvas: #121016;
+  --line-strong: rgb(255 255 255 / 0.3);
+  --edge-focus: #ffffff;
+  --border-subtle: rgb(255 255 255 / 0.12);
+  --action-ghost-fg: #9a9b9e;
+  --action-ghost-bg-hover: rgb(255 255 255 / 0.08);
+  --action-ghost-bg-active: rgb(255 255 255 / 0.14);
+  /* Declared again here so they resolve with the rail's own colours, not the content's. */
+  --edge-float: var(--line-strong);
+  --shadow-ring-offset: 0 0 0 2px var(--edge-focus);
+  --shadow-ring-offset-sm: 0 0 0 1.5px var(--edge-focus);
+  --focus-ring: 0 0 0 var(--ring-offset) var(--bg),
+    0 0 0 calc(var(--ring-offset) + var(--ring-width)) var(--edge-focus);
+}
+
+/* --- Nuage: a bright blue band, airy messages, pills ----------------------- */
+[data-style="nuage"] {
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-control: var(--radius-full);
+  --radius-item: var(--radius-full);
+  --radius-space: var(--radius-full);
+  --avatar-radius: var(--radius-full);
+  --msg-gap: 10px;
+  --msg-pad-x: 10px;
+  --msg-pad-top: 8px;
+  --msg-pad-top-grouped: 4px;
+  --msg-space: 6px;
+  --sidebar-selected-mark: none;
+}
+[data-style="nuage"]:not([data-theme$="-dark"]) {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-chrome: #ffffff;
+  --line: #ededed;
+  --line-strong: #dbdbdb;
+  --ink: #222222;
+  --body: #222222;
+  --muted: #6b6b6b;
+  --text-link: #00679e;
+  --surface-mention: #eaf5fb;
+  /* Deeper than the mockup's #0082c9, whose white label would read at 4.2:1 only. */
+  --action-primary-bg: #0073b1;
+  --action-primary-bg-hover: #0073b1;
+  --action-primary-bg-active: #0073b1;
+  --action-primary-fg: #ffffff;
+  --edge-focus: #00679e;
+  --sidebar-bg: #f5f5f5;
+  --sidebar-selected-bg: #d8ecf8;
+  --sidebar-selected-fg: #00507c;
+  /* The band, a shade deeper than the mockup's #0082c9 so white text holds on it (4.2:1 there). */
+  --rail-bg: #0073b1;
+  --badge-bg: #0073b1;
+  --badge-fg: #ffffff;
+  --msg-bg: transparent;
+  --msg-edge: none;
+  --acc: #b3dcf3;
+  --control-line: #8a8a8a;
+}
+[data-style="nuage"][data-theme$="-dark"] {
+  --bg: #171717;
+  --surface: #222222;
+  --surface-chrome: #171717;
+  --line: #2a2a2a;
+  --line-strong: #3d3d3d;
+  --ink: #ffffff;
+  --body: #e6e6e6;
+  --muted: #a8a8a8;
+  --text-link: #55b6ec;
+  --surface-mention: #13293a;
+  /* The light blue of the night carries a dark label: a white one would read at 3:1. */
+  --action-primary-bg: #2a9de0;
+  --action-primary-bg-hover: #2a9de0;
+  --action-primary-bg-active: #2a9de0;
+  --action-primary-fg: #111111;
+  --edge-focus: #55b6ec;
+  --sidebar-bg: #222222;
+  --sidebar-selected-bg: #11384f;
+  --sidebar-selected-fg: #bfe3f7;
+  --rail-bg: #00507c;
+  --badge-bg: #2a9de0;
+  --badge-fg: #111111;
+  --msg-bg: transparent;
+  --msg-edge: none;
+  --acc: #b3dcf3;
+  --control-line: #707070;
+}
+[data-style="nuage"]:not([data-theme$="-dark"]) .wc-pane-rail {
+  --text-muted: #ffffff;
+  --text-subtle: #ffffff;
+  --surface-canvas: #0073b1;
+  --line-strong: rgb(255 255 255 / 0.4);
+  --edge-focus: #ffffff;
+  --border-subtle: rgb(255 255 255 / 0.2);
+  --action-ghost-fg: #ffffff;
+  --action-ghost-bg-hover: rgb(255 255 255 / 0.08);
+  --action-ghost-bg-active: rgb(255 255 255 / 0.14);
+  /* Declared again here so they resolve with the rail's own colours, not the content's. */
+  --edge-float: var(--line-strong);
+  --shadow-ring-offset: 0 0 0 2px var(--edge-focus);
+  --shadow-ring-offset-sm: 0 0 0 1.5px var(--edge-focus);
+  --focus-ring: 0 0 0 var(--ring-offset) var(--bg),
+    0 0 0 calc(var(--ring-offset) + var(--ring-width)) var(--edge-focus);
+}
+[data-style="nuage"][data-theme$="-dark"] .wc-pane-rail {
+  --text-muted: #ffffff;
+  --text-subtle: #ffffff;
+  --surface-canvas: #00507c;
+  --line-strong: rgb(255 255 255 / 0.4);
+  --edge-focus: #ffffff;
+  --border-subtle: rgb(255 255 255 / 0.2);
+  --action-ghost-fg: #ffffff;
+  --action-ghost-bg-hover: rgb(255 255 255 / 0.08);
+  --action-ghost-bg-active: rgb(255 255 255 / 0.14);
+  /* Declared again here so they resolve with the rail's own colours, not the content's. */
+  --edge-float: var(--line-strong);
+  --shadow-ring-offset: 0 0 0 2px var(--edge-focus);
+  --shadow-ring-offset-sm: 0 0 0 1.5px var(--edge-focus);
+  --focus-ring: 0 0 0 var(--ring-offset) var(--bg),
+    0 0 0 calc(var(--ring-offset) + var(--ring-width)) var(--edge-focus);
+}
+
+/* --- Indigo: each message on a card, over a grey canvas -------------------- */
+[data-style="indigo"] {
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-control: 4px;
+  --radius-item: 4px;
+  --radius-space: 6px;
+  --avatar-radius: var(--radius-full);
+  --msg-gap: 10px;
+  --msg-pad-x: 12px;
+  --msg-pad-top: 8px;
+  --msg-pad-top-grouped: 4px;
+  --msg-space: 8px;
+  --sidebar-selected-mark: none;
+}
+[data-style="indigo"]:not([data-theme$="-dark"]) {
+  --bg: #f5f5f5;
+  --surface: #ffffff;
+  --surface-chrome: #ffffff;
+  --line: #e0e0e0;
+  --line-strong: #d1d1d1;
+  --ink: #242424;
+  --body: #242424;
+  --muted: #616161;
+  --text-link: #4f52b2;
+  --surface-mention: #e8ebfa;
+  --action-primary-bg: #5b5fc7;
+  --action-primary-bg-hover: #5b5fc7;
+  --action-primary-bg-active: #5b5fc7;
+  --action-primary-fg: #ffffff;
+  --edge-focus: #4f52b2;
+  --sidebar-bg: #fafafa;
+  --sidebar-selected-bg: #ffffff;
+  --sidebar-selected-fg: #4f52b2;
+  --rail-bg: #ebebeb;
+  --badge-bg: #c4314b;
+  --badge-fg: #ffffff;
+  --msg-bg: var(--surface);
+  --msg-edge: 1px solid #e6e6e6;
+  --acc: #c5c8f5;
+  --control-line: #858585;
+}
+[data-style="indigo"][data-theme$="-dark"] {
+  --bg: #1f1f1f;
+  --surface: #292929;
+  --surface-chrome: #292929;
+  --line: #3d3d3d;
+  --line-strong: #4a4a4a;
+  --ink: #ffffff;
+  --body: #d6d6d6;
+  --muted: #adadad;
+  --text-link: #9ea2ff;
+  --surface-mention: #2a2c4d;
+  --action-primary-bg: #7f85f5;
+  --action-primary-bg-hover: #7f85f5;
+  --action-primary-bg-active: #7f85f5;
+  --action-primary-fg: #141414;
+  --edge-focus: #9ea2ff;
+  --sidebar-bg: #1a1a1a;
+  --sidebar-selected-bg: #2e2e2e;
+  --sidebar-selected-fg: #b6b9ff;
+  --rail-bg: #141414;
+  --badge-bg: #c4314b;
+  --badge-fg: #ffffff;
+  --msg-bg: var(--surface);
+  --msg-edge: 1px solid #333333;
+  --acc: #c5c8f5;
+  --control-line: #727272;
+}
+
+/* --- Marine: a navy sidebar, very tight messages, small corners ------------ */
+[data-style="marine"] {
+  --radius-sm: 4px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
+  --radius-xl: 8px;
+  --radius-control: 4px;
+  --radius-item: 4px;
+  --radius-space: 6px;
+  --avatar-radius: var(--radius-full);
+  --msg-gap: 8px;
+  --msg-pad-x: 8px;
+  --msg-pad-top: 5px;
+  --msg-pad-top-grouped: 1px;
+  --msg-space: 0px;
+  /* A bar at the start of the selected row. */
+  --sidebar-selected-mark: inset 3px 0 0 var(--focus-mark);
+}
+[data-style="marine"]:not([data-theme$="-dark"]) {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-chrome: #ffffff;
+  --line: #e3e4e8;
+  --line-strong: #d5d7dc;
+  --ink: #2a2d36;
+  --body: #3f4350;
+  --muted: #6b6f7a;
+  --text-link: #1c58d9;
+  --surface-mention: #fff8e0;
+  --action-primary-bg: #1c58d9;
+  --action-primary-bg-hover: #1c58d9;
+  --action-primary-bg-active: #1c58d9;
+  --action-primary-fg: #ffffff;
+  --edge-focus: #1c58d9;
+  --sidebar-bg: #1e325c;
+  --sidebar-selected-bg: rgb(255 255 255 / 0.14);
+  --sidebar-selected-fg: #ffffff;
+  --rail-bg: #14213e;
+  --badge-bg: #1c58d9;
+  --badge-fg: #ffffff;
+  --msg-bg: transparent;
+  --msg-edge: none;
+  --acc: #b8cdf6;
+  --control-line: #868686;
+  --focus-mark: #5d89ea;
+}
+[data-style="marine"][data-theme$="-dark"] {
+  --bg: #191b1f;
+  --surface: #202228;
+  --surface-chrome: #191b1f;
+  --line: #30333a;
+  --line-strong: #3a3d44;
+  --ink: #ffffff;
+  --body: #dddfe4;
+  --muted: #a3a6ad;
+  --text-link: #6d9af0;
+  --surface-mention: #33301c;
+  /* Deeper than the mockup's #4a7ce8, whose white label read at 3.9:1. */
+  --action-primary-bg: #3d6fdc;
+  --action-primary-bg-hover: #3d6fdc;
+  --action-primary-bg-active: #3d6fdc;
+  --action-primary-fg: #ffffff;
+  --edge-focus: #6d9af0;
+  --sidebar-bg: #202228;
+  --sidebar-selected-bg: rgb(255 255 255 / 0.14);
+  --sidebar-selected-fg: #ffffff;
+  --rail-bg: #121317;
+  --badge-bg: #3d6fdc;
+  --badge-fg: #ffffff;
+  --msg-bg: transparent;
+  --msg-edge: none;
+  --acc: #b8cdf6;
+  --control-line: #6b7080;
+  --focus-mark: #4a7ce8;
+}
+[data-style="marine"]:not([data-theme$="-dark"]) .wc-pane-sidebar {
+  --text-strong: #ffffff;
+  --text-body: rgb(255 255 255 / 0.72);
+  --text-muted: rgb(255 255 255 / 0.6);
+  --text-subtle: rgb(255 255 255 / 0.6);
+  --surface-hover: rgb(255 255 255 / 0.08);
+  --surface-active: rgb(255 255 255 / 0.14);
+  --border-subtle: rgb(255 255 255 / 0.12);
+  --badge-bg: #ffffff;
+  --badge-fg: #1e325c;
+  --action-ghost-fg: rgb(255 255 255 / 0.72);
+  --action-ghost-bg-hover: rgb(255 255 255 / 0.08);
+  --action-ghost-bg-active: rgb(255 255 255 / 0.14);
+  /* What the pane draws on: a count, a tag, the ring of a presence dot, the keyboard focus. */
+  --surface-chrome: #1e325c;
+  --surface-card: rgb(255 255 255 / 0.1);
+  --line: rgb(255 255 255 / 0.16);
+  --border-default: rgb(255 255 255 / 0.24);
+  --edge-focus: #ffffff;
+  /* Declared again here so they resolve with the pane's focus colour, not the content's. */
+  --shadow-ring-offset: 0 0 0 2px var(--edge-focus);
+  --shadow-ring-offset-sm: 0 0 0 1.5px var(--edge-focus);
+  --focus-ring: 0 0 0 var(--ring-offset) var(--bg),
+    0 0 0 calc(var(--ring-offset) + var(--ring-width)) var(--edge-focus);
+}
+[data-style="marine"][data-theme$="-dark"] .wc-pane-sidebar {
+  --text-strong: #ffffff;
+  --text-body: rgb(255 255 255 / 0.72);
+  --text-muted: rgb(255 255 255 / 0.55);
+  --text-subtle: rgb(255 255 255 / 0.55);
+  --surface-hover: rgb(255 255 255 / 0.08);
+  --surface-active: rgb(255 255 255 / 0.14);
+  --border-subtle: rgb(255 255 255 / 0.12);
+  --badge-bg: #ffffff;
+  --badge-fg: #202228;
+  --action-ghost-fg: rgb(255 255 255 / 0.72);
+  --action-ghost-bg-hover: rgb(255 255 255 / 0.08);
+  --action-ghost-bg-active: rgb(255 255 255 / 0.14);
+  /* What the pane draws on: a count, a tag, the ring of a presence dot, the keyboard focus. */
+  --surface-chrome: #202228;
+  --surface-card: rgb(255 255 255 / 0.1);
+  --line: rgb(255 255 255 / 0.16);
+  --border-default: rgb(255 255 255 / 0.24);
+  --edge-focus: #ffffff;
+  /* Declared again here so they resolve with the pane's focus colour, not the content's. */
+  --shadow-ring-offset: 0 0 0 2px var(--edge-focus);
+  --shadow-ring-offset-sm: 0 0 0 1.5px var(--edge-focus);
+  --focus-ring: 0 0 0 var(--ring-offset) var(--bg),
+    0 0 0 calc(var(--ring-offset) + var(--ring-width)) var(--edge-focus);
+}
+[data-style="marine"]:not([data-theme$="-dark"]) .wc-pane-rail {
+  --text-muted: rgb(255 255 255 / 0.6);
+  --text-subtle: rgb(255 255 255 / 0.6);
+  --surface-canvas: #14213e;
+  --line-strong: rgb(255 255 255 / 0.3);
+  --edge-focus: #ffffff;
+  --border-subtle: rgb(255 255 255 / 0.12);
+  --action-ghost-fg: rgb(255 255 255 / 0.72);
+  --action-ghost-bg-hover: rgb(255 255 255 / 0.08);
+  --action-ghost-bg-active: rgb(255 255 255 / 0.14);
+  /* Declared again here so they resolve with the rail's own colours, not the content's. */
+  --edge-float: var(--line-strong);
+  --shadow-ring-offset: 0 0 0 2px var(--edge-focus);
+  --shadow-ring-offset-sm: 0 0 0 1.5px var(--edge-focus);
+  --focus-ring: 0 0 0 var(--ring-offset) var(--bg),
+    0 0 0 calc(var(--ring-offset) + var(--ring-width)) var(--edge-focus);
+}
+[data-style="marine"][data-theme$="-dark"] .wc-pane-rail {
+  --text-muted: rgb(255 255 255 / 0.55);
+  --text-subtle: rgb(255 255 255 / 0.55);
+  --surface-canvas: #121317;
+  --line-strong: rgb(255 255 255 / 0.3);
+  --edge-focus: #ffffff;
+  --border-subtle: rgb(255 255 255 / 0.12);
+  --action-ghost-fg: rgb(255 255 255 / 0.72);
+  --action-ghost-bg-hover: rgb(255 255 255 / 0.08);
+  --action-ghost-bg-active: rgb(255 255 255 / 0.14);
+  /* Declared again here so they resolve with the rail's own colours, not the content's. */
+  --edge-float: var(--line-strong);
+  --shadow-ring-offset: 0 0 0 2px var(--edge-focus);
+  --shadow-ring-offset-sm: 0 0 0 1.5px var(--edge-focus);
+  --focus-ring: 0 0 0 var(--ring-offset) var(--bg),
+    0 0 0 calc(var(--ring-offset) + var(--ring-width)) var(--edge-focus);
+}
+
+/* --- What floats inside a coloured pane ------------------------------------ */
+/* A dialog, a sheet or a field drawn inside the sidebar or the rail takes the content's colours back,
+   on its own surface. Popovers and tooltips are portaled to <body> and never sit in a pane; a menu
+   drawn in place (class `wc-float`) is covered all the same. */
+[data-style] :is(.wc-pane-sidebar, .wc-pane-rail) :is(.wc-float, .wc-pop, .wc-dlg, .wc-sheet, .wc-inp) {
+  --text-strong: var(--float-text-strong);
+  --text-body: var(--float-text-body);
+  --text-muted: var(--float-text-muted);
+  --text-subtle: var(--float-text-subtle);
+  --surface-hover: var(--float-surface-hover);
+  --surface-active: var(--float-surface-active);
+  --border-subtle: var(--float-border-subtle);
+  --surface-canvas: var(--float-surface-canvas);
+  --line-strong: var(--float-line-strong);
+  --edge-focus: var(--float-edge-focus);
+  --badge-bg: var(--float-badge-bg);
+  --badge-fg: var(--float-badge-fg);
+  --action-ghost-fg: var(--float-action-ghost-fg);
+  --action-ghost-bg-hover: var(--float-action-ghost-bg-hover);
+  --action-ghost-bg-active: var(--float-action-ghost-bg-active);
+  --surface-chrome: var(--float-surface-chrome);
+  --surface-card: var(--float-surface-card);
+  --line: var(--float-line);
+  --border-default: var(--float-border-default);
+  --shadow-ring-offset: var(--float-shadow-ring-offset);
+  --shadow-ring-offset-sm: var(--float-shadow-ring-offset-sm);
+  --focus-ring: var(--float-focus-ring);
+  --edge-float: var(--float-edge-float);
+}
