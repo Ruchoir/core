@@ -1,0 +1,17 @@
+# Cargo workspace of the shared Rust crates of Ruchoir. Each crate is versioned on its own and
+# consumed by the products through a git tag of this repository.
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
+[workspace.package]
+edition = "2021"
+rust-version = "1.96"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/Ruchoir/core"
+
+[workspace.dependencies]
+# Identifiers (uuid-rs community project, MIT/Apache-2.0), as in the products.
+uuid = { version = "1.26", features = ["v4", "serde"] }
+# Tests only: the recorded permission catalogue is JSON (serde community, MIT/Apache-2.0).
+serde_json = "1"
