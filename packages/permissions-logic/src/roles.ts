@@ -32,7 +32,7 @@ export type RoleLike = {
   manageable: boolean;
 };
 
-/** The catalogue in four families, in its order (`apps/api/src/permissions/catalogue.rs`). */
+/** The catalogue in four families, in its order (`crates/ruchoir-permissions/src/catalogue.rs`). */
 export const FAMILIES: { key: "space" | "channels" | "files" | "calendars"; permissions: string[] }[] = [
   {
     key: "space",

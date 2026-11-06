@@ -51,6 +51,12 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
+  packages/permissions-logic:
+    devDependencies:
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
 packages:
 
   '@dicebear/core@10.7.0':

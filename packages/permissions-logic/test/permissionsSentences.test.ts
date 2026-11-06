@@ -1,9 +1,9 @@
-// Run with `pnpm --filter @ruchoir/client test` (Node's own runner, types stripped by Node).
+// Run with `pnpm --filter @ruchoir/permissions-logic test` (Node's own runner, types stripped by Node).
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { capitalFirst, closeSentence, joinClosed, tidyPeriods } from "../src/permissionsLogic/sentences.ts";
-import { guestNoticeDetail, guestNoticeSummary } from "../src/permissionsLogic/guestNotices.ts";
+import { capitalFirst, closeSentence, joinClosed, tidyPeriods } from "../src/sentences.ts";
+import { guestNoticeDetail, guestNoticeSummary } from "../src/guestNotices.ts";
 
 test("a_period_after_an_abbreviation_is_not_doubled", () => {
   assert.equal(tidyPeriods("Jusqu'au 7 nov.. Vous pouvez prolonger son accès."), "Jusqu'au 7 nov. Vous pouvez prolonger son accès.");

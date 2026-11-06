@@ -1,7 +1,7 @@
-import { readFileSync } from "node:fs";
+// Run with `pnpm --filter @ruchoir/permissions-logic test` (Node's own runner, types stripped by Node).
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { foldMention, matchGroupMention, matchMentionTarget, prepareGroupNames } from "../src/permissionsLogic/index.ts";
+import { foldMention, matchGroupMention, matchMentionTarget, prepareGroupNames } from "../src/index.ts";
 
 test("a_group_name_is_matched_before_a_shorter_person_name", () => {
   const people = ["Chantier", "Camille Martin", "canal"];
@@ -96,7 +96,7 @@ test("prepared_names_are_folded_once_and_reused", () => {
 });
 
 test("the_room_wide_handles_are_offered_only_where_the_person_may_use_them", async () => {
-  const { offeredBroadcasts } = await import("../src/permissionsLogic/index.ts");
+  const { offeredBroadcasts } = await import("../src/index.ts");
   const all = [{ name: "canal" }, { name: "ici" }];
   assert.deepEqual(offeredBroadcasts(all, "ca", true), [{ name: "canal" }]);
   assert.deepEqual(offeredBroadcasts(all, "", true), all);
@@ -105,15 +105,11 @@ test("the_room_wide_handles_are_offered_only_where_the_person_may_use_them", asy
 });
 
 test("the_room_wide_handles_are_the_servers", async () => {
-  const { ROOM_HANDLES, PRESENT_HANDLES, broadcastMentionNames, foldMention } = await import("../src/permissionsLogic/index.ts");
-  const rust = readFileSync(new URL("../../../apps/api/src/messaging/mentions.rs", import.meta.url), "utf8");
-  const words = (name: string) => {
-    const block = new RegExp(`const ${name}: \\[&str; \\d+\\] = \\[([^\\]]*)\\]`).exec(rust);
-    assert.ok(block, `${name} not found in mentions.rs`);
-    return [...block[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
-  };
-  assert.deepEqual([...ROOM_HANDLES].sort(), words("CHANNEL_HANDLES").sort());
-  assert.deepEqual([...PRESENT_HANDLES].sort(), words("HERE_HANDLES").sort());
+  const { ROOM_HANDLES, PRESENT_HANDLES, broadcastMentionNames, foldMention } = await import("../src/index.ts");
+  // The server's own lists (its mentions module, not in this repository), pinned so that changing
+  // them is a decision taken with the server's.
+  assert.deepEqual([...ROOM_HANDLES].sort(), ["all", "canal", "canale", "channel", "everyone", "kanal", "tous"]);
+  assert.deepEqual([...PRESENT_HANDLES].sort(), ["aqui", "here", "hier", "ici", "qui", "tutaj"]);
   // Every spelling a screen highlights folds to a handle the server knows, accents and l-stroke included.
   const known = new Set<string>([...ROOM_HANDLES, ...PRESENT_HANDLES]);
   const spellings = broadcastMentionNames();
@@ -122,12 +118,12 @@ test("the_room_wide_handles_are_the_servers", async () => {
 });
 
 test("the_l_with_a_stroke_is_folded_as_the_server_folds_it", async () => {
-  const { foldMention } = await import("../src/permissionsLogic/index.ts");
+  const { foldMention } = await import("../src/index.ts");
   assert.equal(foldMention("Kanał"), "kanal");
 });
 
 test("a_room_wide_handle_is_found_by_any_word_of_its_kind", async () => {
-  const { offeredBroadcasts } = await import("../src/permissionsLogic/index.ts");
+  const { offeredBroadcasts } = await import("../src/index.ts");
   const all = [{ name: "canal" }, { name: "ici" }];
   assert.deepEqual(offeredBroadcasts(all, "Kan", true), [{ name: "canal" }]);
   assert.deepEqual(offeredBroadcasts(all, "tut", true), [{ name: "ici" }]);

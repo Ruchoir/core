@@ -1,11 +1,10 @@
-// Run with `pnpm --filter @ruchoir/client test` (Node's own runner, types stripped by Node).
+// Run with `pnpm --filter @ruchoir/permissions-logic test` (Node's own runner, types stripped by Node).
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { readFileSync } from "node:fs";
-import { fullPath, authorNote, delegationIntro, isYou, freeManage, askWho } from "../src/permissionsLogic/access.ts";
-import { canCustomise } from "../src/permissionsLogic/customise.ts";
-import { everyoneLine, addLevelOptions, calendarLevelOf, canEdit, entryEditable, inheritedLink, withOverrides, entryNote, groupEntries, levelLabelKey, levelOptions, privateNote, readOnlyReason, removable, type EntryLike } from "../src/permissionsLogic/access.ts";
+import { fullPath, authorNote, delegationIntro, isYou, freeManage, askWho } from "../src/access.ts";
+import { canCustomise } from "../src/customise.ts";
+import { everyoneLine, addLevelOptions, calendarLevelOf, canEdit, entryEditable, inheritedLink, withOverrides, entryNote, groupEntries, levelLabelKey, levelOptions, privateNote, readOnlyReason, removable, type EntryLike } from "../src/access.ts";
 
 const may = (levels: string[], over: Partial<{ edit: boolean; reason: string }> = {}) => ({
   edit: over.edit ?? true,
@@ -221,15 +220,6 @@ test("a_free_space_manager_is_told_who_to_ask", () => {
   const m = (name: string, role: string, bot = false) => ({ name, role, bot });
   assert.deepEqual(askWho([m("Camille", "admin"), m("Julie", "member"), m("Sophie", "owner"), m("Bot", "admin", true), m("Léo", "admin"), m("Zoé", "admin"), m("Max", "admin")]), ["Sophie", "Camille", "Léo"]);
   assert.deepEqual(askWho([m("Julie", "member")]), []);
-  for (const locale of ["fr", "en", "de", "es", "it", "pl"]) {
-    const dict = JSON.parse(readFileSync(new URL(`../../../apps/web/lib/i18n/dictionaries/${locale}.json`, import.meta.url), "utf8")) as Record<string, unknown>;
-    const has = (key: string) => key.split(".").reduce<unknown>((at, p) => (at as Record<string, unknown> | undefined)?.[p], dict) !== undefined;
-    for (const kind of ["channel", "file", "calendar"] as const) for (const folder of [true, false]) {
-      const keys = freeManage(view("licence_required"), kind, folder)!;
-      for (const key of [keys.lead, keys.detail, keys.cta]) assert.ok(has(key), `${locale}: ${key}`);
-    }
-    for (const key of ["access.freeManage.subtitle", "access.freeManage.noNames", "common.or", "access.learnMore", "access.verify"]) assert.ok(has(key), `${locale}: ${key}`);
-  }
 });
 
 test("a_guest_is_compared_with_the_guests_line_only", () => {
@@ -272,12 +262,6 @@ test("a_local_manager_is_told_what_they_may_do", () => {
   assert.equal(delegationIntro(view(true), "other", "file", true), undefined);
   mine.level = "contribute";
   assert.equal(delegationIntro(view(true), me, "file", true), undefined);
-  for (const locale of ["fr", "en", "de", "es", "it", "pl"]) {
-    const dict = JSON.parse(readFileSync(new URL(`../../../apps/web/lib/i18n/dictionaries/${locale}.json`, import.meta.url), "utf8")) as Record<string, unknown>;
-    for (const key of ["access.delegation.folder", "access.delegation.file", "access.delegation.calendar", "access.delegation.channel", "access.delegationHead", "access.delegationBody", "access.delegationFoot", "access.you"]) {
-      assert.ok(key.split(".").reduce<unknown>((at, p) => (at as Record<string, unknown> | undefined)?.[p], dict) !== undefined, `${locale}: ${key}`);
-    }
-  }
 });
 
 const VIEWER = "9f1c6d2e-3b4f-4a5b-8c6d-7e8f9a0b1c2d";
@@ -298,10 +282,6 @@ test("an_entry_the_viewer_added_says_so", () => {
 test("no_author_no_line", () => {
   assert.equal(authorNote(entry({ kind: "user" }), VIEWER), undefined);
   assert.equal(authorNote(entry({ kind: "user", setBy: undefined }), undefined), undefined);
-  for (const locale of ["fr", "en", "de", "es", "it", "pl"]) {
-    const dict = JSON.parse(readFileSync(new URL(`../../../apps/web/lib/i18n/dictionaries/${locale}.json`, import.meta.url), "utf8")) as Record<string, unknown>;
-    for (const key of ["access.givenBy", "access.addedByYou"]) assert.ok(key.split(".").reduce<unknown>((at, p) => (at as Record<string, unknown> | undefined)?.[p], dict) !== undefined, `${locale}: ${key}`);
-  }
 });
 
 test("an_override_takes_the_place_of_what_it_replaces", () => {

@@ -1,23 +1,10 @@
+// Run with `pnpm --filter @ruchoir/permissions-logic test` (Node's own runner, types stripped by Node).
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import { GROUP_DESCRIPTION_MAX } from "../src/permissionsLogic/index.ts";
+import { GROUP_DESCRIPTION_MAX } from "../src/index.ts";
 
+// The limit mirrors the server's (`DESCRIPTION_MAX` of its group routes), which this repository does
+// not hold: it is pinned here, so that changing it is a decision taken with the server's.
 test("the_group_description_limit_is_the_servers", () => {
-  const rust = readFileSync(new URL("../../../apps/api/src/permissions/group_routes.rs", import.meta.url), "utf8");
-  const server = /const DESCRIPTION_MAX: usize = (\d+);/.exec(rust);
-  assert.ok(server, "DESCRIPTION_MAX not found in group_routes.rs");
-  assert.equal(GROUP_DESCRIPTION_MAX, Number(server[1]));
-});
-
-test("the_screens_use_the_shared_limit_not_a_number_of_their_own", () => {
-  for (const file of [
-    "../../../apps/web/features/settings/GroupsSettings.tsx",
-    "../../../apps/web/features/settings/GroupEditor.tsx",
-    "../../../apps/mobile/src/screens/space/GroupFormScreen.tsx",
-  ]) {
-    const text = readFileSync(new URL(file, import.meta.url), "utf8");
-    assert.match(text, /GROUP_DESCRIPTION_MAX/, file);
-    assert.doesNotMatch(text, /(maxLength=\{|DESCRIPTION_MAX = )300/, file);
-  }
+  assert.equal(GROUP_DESCRIPTION_MAX, 280);
 });

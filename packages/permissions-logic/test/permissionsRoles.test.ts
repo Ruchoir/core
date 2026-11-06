@@ -1,9 +1,9 @@
-// Run with `pnpm --filter @ruchoir/client test` (Node's own runner, types stripped by Node).
+// Run with `pnpm --filter @ruchoir/permissions-logic test` (Node's own runner, types stripped by Node).
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { changedPermissions, FAMILIES, grantableRoles, holdsEverything, memberAccessFor, orderAllowed, permissionRow, roleIdsToSave, roleRowState } from "../src/permissionsLogic/roles.ts";
-import { groupsOf, holdsRole, rolePeople, rolesViaGroups, type GroupLike } from "../src/permissionsLogic/groups.ts";
+import { changedPermissions, FAMILIES, grantableRoles, holdsEverything, memberAccessFor, orderAllowed, permissionRow, roleIdsToSave, roleRowState } from "../src/roles.ts";
+import { groupsOf, holdsRole, rolePeople, rolesViaGroups, type GroupLike } from "../src/groups.ts";
 
 const role = (id: string, over: Partial<{ systemKey: "administrator" | "members" | "guests"; permissions: string[]; manageable: boolean; position: number }> = {}) => ({
   id,

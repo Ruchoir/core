@@ -239,4 +239,17 @@ export {
   PRESENT_HANDLES,
   broadcastMentionNames,
 } from "./mentions.ts";
-export { type AdminLicence, type LicenceRow, licenceRows, applyRights, applyChannelRights, spaceLicenceBanner, licenceDetail, type LicenceStanding, licenceStanding } from "./licences.ts";
+export {
+  type ListedLicence,
+  type LicenceRow,
+  licenceRows,
+  type SpaceRights,
+  applyRights,
+  type HeldChannel,
+  applyChannelRights,
+  spaceLicenceBanner,
+  licenceDetail,
+  type LicenceState,
+  type LicenceStanding,
+  licenceStanding,
+} from "./licences.ts";

@@ -1,8 +1,8 @@
-// Run with `pnpm --filter @ruchoir/client test` (Node's own runner, types stripped by Node).
+// Run with `pnpm --filter @ruchoir/permissions-logic test` (Node's own runner, types stripped by Node).
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { auditLine, daysLeftBanner, dayKey } from "../src/permissionsLogic/audit.ts";
+import { auditLine, daysLeftBanner, dayKey } from "../src/audit.ts";
 
 const entry = (action: string, over: Partial<{ actor: { id: string; name: string } | undefined; target: { kind: string; id?: string; label?: string }; details: Record<string, unknown> }> = {}) => ({
   id: "e",

@@ -1,26 +1,8 @@
-import { test, beforeEach } from "node:test";
+// Run with `pnpm --filter @ruchoir/permissions-logic test` (Node's own runner, types stripped by Node).
+import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { createClient, resetClientForTests } from "../src/index.ts";
-import { applyChannelRights, licenceRows } from "../src/permissionsLogic/index.ts";
-import { fakeFetch } from "./fakeFetch.ts";
-
-beforeEach(() => resetClientForTests());
-
-test("the_instance_administrator_reads_every_spaces_licence", async () => {
-  const calls = fakeFetch({
-    body: [
-      { space_id: "s1", space_name: "Atelier", organisation: "Atelier SARL", seats: 25, used: 8, valid_until: "2027-01-31T23:59:59Z", edition: "enterprise" },
-      { space_id: "s2", space_name: "Cabinet", organisation: "Cabinet Dubois", seats: 5, used: 6, valid_until: "2026-10-01T23:59:59Z", edition: "frozen" },
-    ],
-  });
-  const list = await createClient({ baseUrl: "https://a.test" }).getAdminLicences();
-  assert.equal(new URL(calls[0].url).pathname, "/api/v1/admin/licences");
-  assert.deepEqual(list[0], {
-    spaceId: "s1", spaceName: "Atelier", organisation: "Atelier SARL", seats: 25, used: 8, validUntil: "2027-01-31T23:59:59Z", edition: "enterprise",
-  });
-  assert.equal(list[1].edition, "frozen");
-});
+import { applyChannelRights, licenceRows } from "../src/index.ts";
 
 test("licences_are_listed_by_soonest_expiry_with_days_left_and_frozen", () => {
   const rows = licenceRows(
@@ -40,7 +22,7 @@ test("licences_are_listed_by_soonest_expiry_with_days_left_and_frozen", () => {
 });
 
 test("a_change_of_rights_carries_the_end_date_and_the_preview_too", async () => {
-  const { applyRights } = await import("../src/permissionsLogic/index.ts");
+  const { applyRights } = await import("../src/index.ts");
   const old = { id: "s", name: "S", role: "guest", expiresAt: "2026-11-10T00:00:00Z", unread: 4, edition: "community" } as never;
   const fresh = { id: "s", name: "S", role: "member", myPermissions: ["files.view"], edition: "enterprise", unread: 0, preview: { roleId: "r", roleName: "R" } } as never;
   const merged = applyRights(old, fresh) as Record<string, unknown>;
@@ -52,7 +34,7 @@ test("a_change_of_rights_carries_the_end_date_and_the_preview_too", async () => 
 });
 
 test("the_owner_is_warned_in_the_settings_when_the_licence_ends_within_30_days_or_is_frozen", async () => {
-  const { spaceLicenceBanner } = await import("../src/permissionsLogic/index.ts");
+  const { spaceLicenceBanner } = await import("../src/index.ts");
   const now = new Date("2026-11-01T10:00:00Z");
   const licence = (days: number) => ({ seats: 5, used: 1, validUntil: new Date(now.getTime() + days * 86400000).toISOString(), expiresInDays: days });
   const banner = (space: Parameters<typeof spaceLicenceBanner>[0]) => spaceLicenceBanner(space, now, "UTC");
@@ -109,7 +91,7 @@ test("a_channel_list_read_after_a_role_edit_keeps_what_only_this_client_knows", 
 });
 
 test("one_rule_for_the_days_left_of_a_licence_banner_and_list_alike", async () => {
-  const { spaceLicenceBanner, licenceRows } = await import("../src/permissionsLogic/index.ts");
+  const { spaceLicenceBanner, licenceRows } = await import("../src/index.ts");
   // Ends 16 November 00:00 UTC, seen on 5 November 00:27 in Paris: the 16th is the 11th day after the 5th.
   const now = new Date("2026-11-04T23:27:00Z");
   const zone = "Europe/Paris";
@@ -125,7 +107,7 @@ test("one_rule_for_the_days_left_of_a_licence_banner_and_list_alike", async () =
 });
 
 test("the_licence_detail_line_names_the_holder_only_when_it_differs_and_says_unreadable_once", async () => {
-  const { licenceDetail } = await import("../src/permissionsLogic/index.ts");
+  const { licenceDetail } = await import("../src/index.ts");
   const row = { organisation: "Cabinet Morel", spaceName: "Cabinet Morel" };
   assert.deepEqual(licenceDetail(row, ["Entreprise", "1 sur 10 places", "5 nov. 2026"]), ["Entreprise", "1 sur 10 places", "5 nov. 2026"]);
   assert.deepEqual(licenceDetail({ ...row, organisation: " cabinet morel " }, ["Entreprise"]), ["Entreprise"]);
@@ -134,10 +116,11 @@ test("the_licence_detail_line_names_the_holder_only_when_it_differs_and_says_unr
   assert.deepEqual(licenceDetail(row, ["Illisible", "1 sur 10 places", "Illisible"]), ["Illisible", "1 sur 10 places"]);
 });
 
-import { licenceStanding } from "../src/permissionsLogic/index.ts";
-import type { LicenceView } from "../src/types.ts";
+import { licenceStanding } from "../src/index.ts";
+import type { LicenceState } from "../src/index.ts";
 
-const online = (over: Partial<LicenceView> = {}): LicenceView => ({
+// A product's own licence record, wider than what the standing reads: it fits as it is.
+const online = (over: Partial<LicenceState> = {}) => ({
   licenceId: "l", organisation: "Atelier", seats: 25, used: 8, validUntil: "2027-11-04T00:00:00Z", edition: "enterprise",
   mode: "online", status: "active", lastCheckInAt: "2026-11-05T14:00:00Z", ...over,
 });
