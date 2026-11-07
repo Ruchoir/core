@@ -1528,7 +1528,7 @@ dependencies = [
 
 [[package]]
 name = "ruchoir-auth"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "axum",
  "form_urlencoded",
@@ -1543,14 +1543,14 @@ dependencies = [
 
 [[package]]
 name = "ruchoir-contract"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "serde_json",
 ]
 
 [[package]]
 name = "ruchoir-events"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "base64",
  "ring",
@@ -1562,7 +1562,7 @@ dependencies = [
 
 [[package]]
 name = "ruchoir-http"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "axum",
  "getrandom 0.4.3",
@@ -1577,7 +1577,7 @@ dependencies = [
 
 [[package]]
 name = "ruchoir-permissions"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "serde_json",
  "uuid",
