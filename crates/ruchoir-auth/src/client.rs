@@ -169,17 +169,22 @@ impl Client {
     /// Post a token request, authenticated with a fresh assertion.
     pub async fn request(&self, form: &[(&str, &str)]) -> Result<TokenSet, ClientError> {
         let assertion = self.credentials.assertion(&self.issuer)?;
-        let mut body = form_urlencoded::Serializer::new(String::new());
-        for (name, value) in form {
-            body.append_pair(name, value);
-        }
-        body.append_pair("client_assertion_type", JWT_BEARER)
-            .append_pair("client_assertion", &assertion);
+        // Built and finished before any await: the serializer is not `Sync`, and a future holding
+        // it could not run in `tokio::spawn`.
+        let body = {
+            let mut body = form_urlencoded::Serializer::new(String::new());
+            for (name, value) in form {
+                body.append_pair(name, value);
+            }
+            body.append_pair("client_assertion_type", JWT_BEARER)
+                .append_pair("client_assertion", &assertion);
+            body.finish()
+        };
         let response = self
             .http
             .post(&self.token_endpoint)
             .header("content-type", "application/x-www-form-urlencoded")
-            .body(body.finish())
+            .body(body)
             .send()
             .await
             .map_err(ClientError::Transport)?;
@@ -277,5 +282,12 @@ mod tests {
             !format!("{credentials:?}").contains("key:"),
             "never the key"
         );
+    }
+
+    /// Products ask tokens from spawned tasks: the futures must be `Send`.
+    #[allow(dead_code)]
+    fn the_futures_can_be_spawned(client: Client) {
+        fn spawnable<T: Send>(_: T) {}
+        spawnable(async move { client.client_credentials(None, &[]).await });
     }
 }
