@@ -13,7 +13,8 @@
 //!   which this crate's own version carries.
 //! - `occurred_at` is when it happened according to the emitter, in RFC 3339 (UTC when built here).
 //! - `source` is the emitting service's name (`drive`, `propolis`), for logs and routing. It is
-//!   not a proof of origin: the signature is (see [`crate::signature`]).
+//!   not a proof of origin by itself: a consumer accepts it only when it names the service that
+//!   owns the signing key (see [`crate::signature`]).
 //! - `organisation` is the organisation the event concerns, when there is one.
 
 use std::fmt;

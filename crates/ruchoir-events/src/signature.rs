@@ -41,6 +41,14 @@
 //! parameters exactly once, in either order, nothing else. A new parameter is a new format, decided
 //! deliberately, not something an old consumer silently ignores.
 //!
+//! # Whose key it is
+//!
+//! Every trusted key belongs to one service, its *owner*: Propolis publishes each service's event
+//! keys with the service they belong to (ADR 0011 of `Ruchoir/.github`). A valid signature only
+//! proves that the owner of the key wrote the bytes, so [`verify_and_parse`] also refuses an event
+//! whose `source` is not that owner. Without this check, any producer could sign an event in
+//! another service's name (the drive announcing that Propolis deleted an account).
+//!
 //! # What the signature does not do
 //!
 //! - It proves who wrote the event and that it was not changed, not that it is fresh. Replaying the
@@ -136,14 +144,20 @@ impl fmt::Debug for SigningKey {
     }
 }
 
-/// The public keys a consumer trusts, by key id.
+/// The public keys a consumer trusts, by key id, each with the service that owns it.
 ///
 /// A consumer fills it from the published keys of the producers it listens to. Holding several
 /// keys at once is what lets a producer rotate: the outgoing and the incoming key are both here
 /// while events signed with the outgoing one may still arrive.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct PublicKeys {
-    keys: BTreeMap<String, [u8; PUBLIC_KEY_LEN]>,
+    keys: BTreeMap<String, TrustedKey>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct TrustedKey {
+    owner: String,
+    key: [u8; PUBLIC_KEY_LEN],
 }
 
 impl PublicKeys {
@@ -152,17 +166,26 @@ impl PublicKeys {
         Self::default()
     }
 
-    /// Trusts `public_key` (32 bytes) for signatures made under `key_id`, replacing what was
-    /// trusted under that id before.
-    pub fn insert(&mut self, key_id: impl Into<String>, public_key: &[u8]) -> Result<(), KeyError> {
+    /// Trusts `public_key` (32 bytes) for signatures made under `key_id` by the service `owner`
+    /// (the name its events carry in `source`), replacing what was trusted under that id before.
+    pub fn insert(
+        &mut self,
+        key_id: impl Into<String>,
+        owner: impl Into<String>,
+        public_key: &[u8],
+    ) -> Result<(), KeyError> {
         let key_id = key_id.into();
         if !is_valid_key_id(&key_id) {
             return Err(KeyError::InvalidKeyId);
         }
+        let owner = owner.into();
+        if owner.is_empty() {
+            return Err(KeyError::InvalidOwner);
+        }
         let key: [u8; PUBLIC_KEY_LEN] = public_key
             .try_into()
             .map_err(|_| KeyError::InvalidPublicKey)?;
-        self.keys.insert(key_id, key);
+        self.keys.insert(key_id, TrustedKey { owner, key });
         Ok(())
     }
 
@@ -178,7 +201,12 @@ impl PublicKeys {
 
     /// The public key trusted under `key_id`.
     pub fn get(&self, key_id: &str) -> Option<&[u8]> {
-        self.keys.get(key_id).map(|key| key.as_slice())
+        self.keys.get(key_id).map(|trusted| trusted.key.as_slice())
+    }
+
+    /// The service that owns the key trusted under `key_id`.
+    pub fn owner(&self, key_id: &str) -> Option<&str> {
+        self.keys.get(key_id).map(|trusted| trusted.owner.as_str())
     }
 
     /// How many keys are trusted.
@@ -287,30 +315,43 @@ pub fn sign(bytes: &[u8], key: &SigningKey) -> SignatureHeader {
 }
 
 /// Checks that `bytes`, the exact body received, were signed by the key `header` names, and that
-/// this key is one of `keys`.
-pub fn verify(
+/// this key is one of `keys`. Returns the service that owns the key.
+///
+/// It does not read the body, so it cannot check the event's `source` against that owner:
+/// [`verify_and_parse`] does both, and is what a consumer of events calls.
+pub fn verify<'k>(
     bytes: &[u8],
     header: &SignatureHeader,
-    keys: &PublicKeys,
-) -> Result<(), VerifyError> {
-    let public_key = keys
+    keys: &'k PublicKeys,
+) -> Result<&'k str, VerifyError> {
+    let trusted = keys
+        .keys
         .get(header.key_id())
         .ok_or_else(|| VerifyError::UnknownKey(header.key_id().to_owned()))?;
-    UnparsedPublicKey::new(&ED25519, public_key)
+    UnparsedPublicKey::new(&ED25519, &trusted.key)
         .verify(bytes, header.signature())
-        .map_err(|_| VerifyError::BadSignature)
+        .map_err(|_| VerifyError::BadSignature)?;
+    Ok(&trusted.owner)
 }
 
 /// What a consumer does with a request: reads the [`SIGNATURE_HEADER`] value, verifies the body
-/// against it, and only then parses the body as an [`Event`].
+/// against it, only then parses the body as an [`Event`], and refuses it unless its `source` is the
+/// service that owns the signing key.
 pub fn verify_and_parse<T: DeserializeOwned>(
     bytes: &[u8],
     header: &str,
     keys: &PublicKeys,
 ) -> Result<Event<T>, VerifyError> {
     let header = SignatureHeader::parse(header).map_err(VerifyError::Header)?;
-    verify(bytes, &header, keys)?;
-    serde_json::from_slice(bytes).map_err(VerifyError::InvalidEvent)
+    let owner = verify(bytes, &header, keys)?;
+    let event: Event<T> = serde_json::from_slice(bytes).map_err(VerifyError::InvalidEvent)?;
+    if event.source != owner {
+        return Err(VerifyError::WrongSource {
+            key_owner: owner.to_owned(),
+            source: event.source,
+        });
+    }
+    Ok(event)
 }
 
 /// An event ready to send: the body to send as is, and the header that goes with it.
@@ -344,6 +385,8 @@ pub enum KeyError {
     InvalidPrivateKey,
     /// The bytes are not a 32-byte Ed25519 public key.
     InvalidPublicKey,
+    /// The owner of a trusted key is empty.
+    InvalidOwner,
     /// The system random source failed while generating a key.
     Generation,
 }
@@ -354,6 +397,7 @@ impl fmt::Display for KeyError {
             Self::InvalidKeyId => "invalid key id",
             Self::InvalidPrivateKey => "not an unencrypted PKCS#8 Ed25519 private key",
             Self::InvalidPublicKey => "not a 32-byte Ed25519 public key",
+            Self::InvalidOwner => "a trusted key needs the name of the service that owns it",
             Self::Generation => "could not generate an Ed25519 key",
         })
     }
@@ -412,6 +456,14 @@ pub enum VerifyError {
     BadSignature,
     /// The body is authentic but is not an event with the expected payload.
     InvalidEvent(serde_json::Error),
+    /// The event is authentic, but names as its `source` another service than the one that owns
+    /// the key that signed it.
+    WrongSource {
+        /// The service that owns the signing key.
+        key_owner: String,
+        /// The service the event claims to come from.
+        source: String,
+    },
 }
 
 impl fmt::Display for VerifyError {
@@ -421,6 +473,10 @@ impl fmt::Display for VerifyError {
             Self::UnknownKey(key_id) => write!(f, "no trusted public key under key id {key_id:?}"),
             Self::BadSignature => f.write_str("signature does not match the body"),
             Self::InvalidEvent(error) => write!(f, "signed body is not a valid event: {error}"),
+            Self::WrongSource { key_owner, source } => write!(
+                f,
+                "event claims to come from {source:?} but is signed by a key of {key_owner:?}"
+            ),
         }
     }
 }
@@ -430,7 +486,7 @@ impl std::error::Error for VerifyError {
         match self {
             Self::Header(error) => Some(error),
             Self::InvalidEvent(error) => Some(error),
-            Self::UnknownKey(_) | Self::BadSignature => None,
+            Self::UnknownKey(_) | Self::BadSignature | Self::WrongSource { .. } => None,
         }
     }
 }
@@ -451,10 +507,14 @@ mod tests {
         SigningKey::generate(key_id).unwrap().0
     }
 
+    /// Trusts each key for the service its id starts with (`drive-1` belongs to `drive`).
     fn trusting(keys: &[&SigningKey]) -> PublicKeys {
         let mut trusted = PublicKeys::new();
         for key in keys {
-            trusted.insert(key.key_id(), key.public_key()).unwrap();
+            let owner = key.key_id().split('-').next().unwrap();
+            trusted
+                .insert(key.key_id(), owner, key.public_key())
+                .unwrap();
         }
         trusted
     }
@@ -687,6 +747,47 @@ mod tests {
     }
 
     #[test]
+    fn verify_names_the_owner_of_the_key() {
+        let drive = key("drive-1");
+        let keys = trusting(&[&drive]);
+        assert_eq!(keys.owner("drive-1"), Some("drive"));
+        assert_eq!(
+            verify(b"body", &sign(b"body", &drive), &keys).unwrap(),
+            "drive"
+        );
+    }
+
+    #[test]
+    fn an_event_signed_by_another_service_than_its_source_is_refused() {
+        // The drive's key is trusted, but only for the drive: an event it signs in Propolis's
+        // name is authentic bytes with a forged origin.
+        let drive = key("drive-1");
+        let forged = Event::new(
+            Kind::new("propolis.account.deleted").unwrap(),
+            1,
+            "propolis",
+            None,
+            FileDeleted {
+                file_id: Uuid::new_v4(),
+            },
+        );
+        let signed = forged.sign(&drive).unwrap();
+        let error = verify_and_parse::<FileDeleted>(
+            &signed.body,
+            &signed.header.to_header_value(),
+            &trusting(&[&drive]),
+        )
+        .unwrap_err();
+        match error {
+            VerifyError::WrongSource { key_owner, source } => {
+                assert_eq!(key_owner, "drive");
+                assert_eq!(source, "propolis");
+            }
+            other => panic!("expected WrongSource, got {other:?}"),
+        }
+    }
+
+    #[test]
     fn verify_and_parse_refuses_before_parsing() {
         let drive = key("drive-1");
         let keys = trusting(&[&drive]);
@@ -771,8 +872,15 @@ mod tests {
             );
         }
         let mut keys = PublicKeys::new();
-        assert_eq!(keys.insert("k1", &[0; 31]), Err(KeyError::InvalidPublicKey));
-        assert_eq!(keys.insert("k=1", &[0; 32]), Err(KeyError::InvalidKeyId));
+        assert_eq!(
+            keys.insert("k1", "drive", &[0; 31]),
+            Err(KeyError::InvalidPublicKey)
+        );
+        assert_eq!(
+            keys.insert("k=1", "drive", &[0; 32]),
+            Err(KeyError::InvalidKeyId)
+        );
+        assert_eq!(keys.insert("k1", "", &[0; 32]), Err(KeyError::InvalidOwner));
         assert!(keys.is_empty());
     }
 
