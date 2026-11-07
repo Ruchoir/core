@@ -19,33 +19,74 @@
  * look like prose, it finds the positions whose value reaches a person's eyes, and every literal
  * that lands in one is a finding whatever language it is written in.
  *
- * Usage: `pnpm --filter @ruchoir/web i18n:check` (CI runs the same command). The mobile app runs the
- * same rules on its own sources and dictionaries with `--app mobile`
- * (`pnpm --filter @ruchoir/mobile i18n:check`).
+ * Every interface of every product runs it on its own sources and dictionaries, described by an
+ * `i18n.config.json` at its root (see the README of `@ruchoir/i18n`):
+ *
+ *     ruchoir-i18n-check                      reads ./i18n.config.json
+ *     ruchoir-i18n-check --config web/i18n.config.json
+ *
+ * The sections this package provides (`common`, `error`) are merged into the product's
+ * dictionaries before any check, and a product that redefines one of them is refused: a shared
+ * sentence has one key, in one place.
  */
 
 import { readFileSync, readdirSync, statSync } from "node:fs";
-import { join, relative, resolve } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
 
-const WEB_ROOT = resolve(fileURLToPath(new URL("../..", import.meta.url)));
+/** This package's own dictionaries: the sections every product shares. */
+const SHARED_DICT_DIR = resolve(fileURLToPath(new URL("../dictionaries", import.meta.url)));
+/** The top-level sections of a dictionary that belong to this package. */
+const RESERVED_SECTIONS = ["common", "error"];
 
-/** Where each app keeps its sources, its dictionaries and (the web only) its translation debt. */
-/** The calendar logic both apps share speaks through their dictionaries: each app is audited with it. */
-const SHARED_CALENDAR = "../../packages/client/src/calendarLogic";
-/** The permissions logic both apps share names its keys the same way. */
-const SHARED_PERMISSIONS = "../../packages/client/src/permissionsLogic";
-const APPS = {
-  web: { root: WEB_ROOT, scan: ["app", "components", "features", "lib", SHARED_CALENDAR, SHARED_PERMISSIONS], dict: "lib/i18n/dictionaries", debt: "tools/i18n-audit/untranslated.json" },
-  mobile: { root: resolve(WEB_ROOT, "../mobile"), scan: ["src", SHARED_CALENDAR, SHARED_PERMISSIONS], dict: "src/i18n/dictionaries", debt: null },
-};
-const appArg = process.argv.indexOf("--app");
-const APP = APPS[appArg >= 0 ? process.argv[appArg + 1] : "web"];
-if (!APP) throw new Error(`unknown --app; expected one of ${Object.keys(APPS).join(", ")}`);
-const ROOT = APP.root;
-const SCAN_DIRS = APP.scan;
-const DICT_DIR = join(ROOT, APP.dict);
+/**
+ * What one interface asks to be checked, from its `i18n.config.json`. Paths are relative to the
+ * file.
+ *
+ * - `scan`: the source folders to read.
+ * - `dictionaries`: the folder of its six dictionaries, `fr.json` first among them.
+ * - `debt` (optional): a JSON file `{ "files": [...] }` of files tolerated untranslated for now.
+ * - `keyLiterals` (optional): folders of shared logic that hand keys to the screens as plain
+ *   strings (`"access.level.edit"`). A string there shaped like a key the dictionaries answer counts
+ *   as asked for. They are scanned too.
+ * - `allowed` (optional): strings that are not prose (a brand, a font), beside the common ones.
+ * - `allowedDuplicates` (optional): `{ "key": "why it may hold the same French as another key" }`.
+ * - `shared` (optional): true only for this package, whose dictionaries hold nothing but the
+ *   reserved sections.
+ */
+function readConfig() {
+  const flag = process.argv.indexOf("--config");
+  const path = resolve(flag >= 0 ? process.argv[flag + 1] ?? "" : "i18n.config.json");
+  let config;
+  try {
+    config = JSON.parse(readFileSync(path, "utf8"));
+  } catch (error) {
+    throw new Error(`cannot read the i18n configuration ${path}: ${error.message}`);
+  }
+  const isList = (value) => Array.isArray(value) && value.every((item) => typeof item === "string");
+  if (!isList(config.scan) || config.scan.length === 0) throw new Error(`${path}: "scan" must list source folders`);
+  if (typeof config.dictionaries !== "string") throw new Error(`${path}: "dictionaries" must name a folder`);
+  if (config.debt != null && typeof config.debt !== "string") throw new Error(`${path}: "debt" must name a file`);
+  for (const field of ["keyLiterals", "allowed"]) {
+    if (config[field] != null && !isList(config[field])) throw new Error(`${path}: "${field}" must be a list of strings`);
+  }
+  const reasons = config.allowedDuplicates ?? {};
+  if (typeof reasons !== "object" || Array.isArray(reasons)) {
+    throw new Error(`${path}: "allowedDuplicates" must map each key to the reason it may repeat a text`);
+  }
+  for (const [key, why] of Object.entries(reasons)) {
+    if (typeof why !== "string" || why.trim() === "") throw new Error(`${path}: allowedDuplicates.${key} needs its reason`);
+  }
+  return { ...config, root: dirname(path) };
+}
+
+const CONFIG = readConfig();
+const ROOT = CONFIG.root;
+const KEY_LITERAL_DIRS = (CONFIG.keyLiterals ?? []).map((dir) => resolve(ROOT, dir));
+const SCAN_DIRS = [...new Set([...CONFIG.scan, ...(CONFIG.keyLiterals ?? [])])];
+const DICT_DIR = resolve(ROOT, CONFIG.dictionaries);
+const SHARED = CONFIG.shared === true;
 
 /** Attributes and object fields whose value reaches a person's eyes or a screen reader. */
 const TEXT_FIELDS = new Set([
@@ -85,16 +126,20 @@ const TECHNICAL_FIELDS = new Set(["name"]);
  */
 const ALLOWED = new Set([
   "Ruchoir",
-  "Nextcloud",
-  "Slack",
-  "Mattermost",
-  "Teams",
+  // The products' names are fixed in every language (`PRODUCT_NAMES`).
+  "Ruchoir Drive",
+  "Ruchoir Calendar",
+  "Ruchoir Chat",
+  "Drive",
+  "Calendar",
+  "Chat",
   "IBM Plex Sans",
   "IBM Plex Mono",
   "OpenDyslexic",
   "Comic Sans MS",
   "Helvetica Neue",
   "Segoe UI",
+  ...(CONFIG.allowed ?? []),
 ]);
 
 /** A file is skipped entirely when it carries this marker, with the reason on the same line. */
@@ -315,115 +360,15 @@ function findHardCoded(source, path) {
 }
 
 /**
- * Keys that deliberately hold the same French text as another key.
+ * Keys that deliberately hold the same French text as another key, from `allowedDuplicates`.
  *
  * The rule is that one sentence gets one key: duplicating it costs bytes in six files and, worse,
  * lets two copies of the same sentence drift apart until the interface says it two ways. The
  * exception exists because French collapses distinctions other languages keep (a label and a verb,
  * a role and a status), so a pair that is identical here may have to differ in German or Polish.
- * Each entry is that claim, made once, in writing.
+ * Each entry is that claim, made once, in writing, with its reason in the configuration.
  */
-const ALLOWED_DUPLICATES = new Set([
-  // A licence's mode is not a person's presence: "En línea / Sin conexión" against "En línea /
-  // Desconectado", "Offline" against "Non in linea", "Online" against "Dostępny".
-  "licence.mode.online",
-  "licence.mode.offline",
-  // Checking a licence with its issuer, not verifying a code: "Checking…" against "Verifying…".
-  "licence.checking",
-  // A licence not started yet, not an event to come: free to be worded apart.
-  "licence.tag.notYet",
-  // The shared licence logic names the web's "Licence expirée", which the phone also holds as a
-  // section title.
-  "licence.expiredTag",
-  // The shared permissions logic names these web keys, so the phone's dictionaries carry them beside
-  // the phone's own tab and screen titles with the same French words ("Agenda", "Fichiers", "Canaux",
-  // "Canal", "Écrire", "Administrateur"): a family name, a permission name and a role are not a tab.
-  "calendar.title",
-  "gsearch.files",
-  "tabs.channels",
-  "calendar.channel",
-  "perm.messageSend",
-  "role.admin",
-  // The desktop tray's "Quitter" closes the app; the preview band's leaves "Voir en tant que" and
-  // returns to one's own rights. Same French word, two actions, free to be worded apart elsewhere.
-  "preview.quit",
-  // "Vérifier" on the access dialog opens "Pourquoi ?" for a person; the MFA button checks a code.
-  // The same French word, two actions, worded apart in other languages.
-  "access.verify",
-  // The composer's group hint (a head count while the channel roster loads) and a reaction's
-  // reactors list read the same today; they are two screens, free to part ways in any language.
-  "composer.groupHeadCount_one",
-  "composer.groupHeadCount_other",
-  // A permission's name says what one may do, a button what to do now: the same French word
-  // ("Inviter des personnes", "Épingler", "Réagir", "Vider la corbeille"), but an infinitive in a
-  // Polish list of rights and an imperative on a Polish button.
-  // The guests section's title is the people it lists; the calendar's attendees are people at an
-  // event, and several languages word the two differently.
-  "guests.sectionTitle",
-  // A level of an access dialog names what a person may do with the resource: "Modifier" and
-  // "Écrire" are the same French words as the edit button and the permission to send, but a level is
-  // a noun-like label in a list of three, free to be worded otherwise in another language.
-  "access.level.file.contribute",
-  "access.level.calendar.contribute",
-  "perm.membersInvite",
-  "perm.messagePin",
-  "perm.messageReact",
-  "perm.filesTrashPurge",
-
-  // "Système" tags a built-in role and names the system font: one word in French and English, but
-  // Polish agrees it with the noun (rola is feminine, czcionka too, yet the font setting reads as an
-  // adjective of its own).
-  "roles.system",
-
-  // The desktop window's "Restore" button (back from maximised) and a file's "Restore" (out of the
-  // trash) share a word in several languages by coincidence; Windows itself words the first one
-  // apart in some of them.
-  "desktop.titleBar.restore",
-
-  // The calendar's one-day view and the light theme's name are both "Jour" in French, and "Day" in
-  // English, by coincidence: one is a span of time, the other daylight. A language that calls the
-  // light theme "Clair" must be able to keep "Jour" for the view.
-  "calendar.view.day",
-
-  // The import screen counts accounts, conversations, messages and files. The same four words label
-  // a navigation entry, a switcher heading, a mobile tab and a search filter elsewhere, and they
-  // are the same words by coincidence rather than by meaning: renaming a tab must not silently
-  // reword a migration report that an administrator reads once, under pressure, before destroying
-  // or filling an instance.
-  "import.accounts",
-  "import.conversations",
-  "import.messages",
-  "import.files",
-
-  // "Enregistrer" is two different verbs in French: saving a form, and setting a message aside for
-  // later. English happens to collapse them too, but German ("Speichern" / "Merken") and Polish do
-  // not, so merging the keys would force one language to say the wrong thing.
-  "message.save",
-  // "Espace" is the workspace and the space bar. German says "Bereich" and "Leertaste", Polish
-  // "przestrzeń" and "spacja": one key would put a keyboard key in a navigation menu.
-  "key.space",
-  // "Ajouter" adds people to a channel and adds a second factor to an account. German says
-  // "hinzufügen" for the first and "einrichten" for the second.
-  "security.add",
-  // The add-people button of a group with nobody ticked yet: the bare verb, while the calendar's
-  // reminder button is a different action that polish and german word their own way.
-  "groups.addConfirmNone",
-  // "Désactiver" turns a notification setting off and takes two-factor authentication off an
-  // account. The second is a security decision and several languages mark it more strongly.
-  "security.disable",
-  // "Nom" is the file's name and a person's surname. English already says "Name" and "Surname",
-  // German "Name" and "Nachname": merging them would put one of the two words in the wrong place.
-  "signup.lastName",
-  // "Nouveau" is the button that creates something in the files and the badge on a space an import
-  // just created. Polish agrees each with what it names: "Nowy" for the first, "Nowa" for a space.
-  "files.new",
-  // "Archive" is the kind of a compressed file and the sealed export an import reads. Spanish says
-  // "Archivo comprimido" for the first and "Archivo" for the second, which is also its word for a file.
-  "files.typeArchive",
-  // "Annuler" closes a dialog without acting and takes back an action just done. English says
-  // "Cancel" and "Undo", German "Abbrechen" and "Rückgängig".
-  "files.undo",
-]);
+const ALLOWED_DUPLICATES = new Set(Object.keys(CONFIG.allowedDuplicates ?? {}));
 
 /** Every key path in a dictionary object, flattened to `a.b.c`. */
 function keyPaths(value, prefix = "", out = []) {
@@ -435,15 +380,40 @@ function keyPaths(value, prefix = "", out = []) {
   return out;
 }
 
-function loadDictionaries() {
-  const locales = readdirSync(DICT_DIR)
-    .filter((f) => f.endsWith(".json"))
-    .map((f) => f.replace(/\.json$/, ""));
+function readDictionaries(dir) {
   const dicts = {};
-  for (const locale of locales) {
-    dicts[locale] = JSON.parse(readFileSync(join(DICT_DIR, `${locale}.json`), "utf8"));
+  for (const file of readdirSync(dir).filter((f) => f.endsWith(".json"))) {
+    dicts[file.replace(/\.json$/, "")] = JSON.parse(readFileSync(join(dir, file), "utf8"));
   }
   return dicts;
+}
+
+/**
+ * The interface's dictionaries with this package's sections merged in, and what is wrong with how
+ * they share them: a product section named like a reserved one, a language this package does not
+ * carry, or (for this package itself) a section that is not reserved.
+ */
+function loadDictionaries() {
+  const own = readDictionaries(DICT_DIR);
+  const issues = [];
+  if (SHARED) {
+    for (const [locale, dict] of Object.entries(own)) {
+      for (const section of Object.keys(dict)) {
+        if (!RESERVED_SECTIONS.includes(section)) issues.push(`${locale}: section ${section} is not shared`);
+      }
+    }
+    return { dicts: own, issues };
+  }
+  const shared = readDictionaries(SHARED_DICT_DIR);
+  const dicts = {};
+  for (const [locale, dict] of Object.entries(own)) {
+    for (const section of RESERVED_SECTIONS) {
+      if (section in dict) issues.push(`${locale}: section ${section} belongs to @ruchoir/i18n; use its keys`);
+    }
+    if (!shared[locale]) issues.push(`${locale}: @ruchoir/i18n carries no dictionary for this language`);
+    dicts[locale] = { ...dict, ...(shared[locale] ?? {}) };
+  }
+  return { dicts, issues };
 }
 
 /** The value at a flattened key path. */
@@ -454,14 +424,11 @@ function valueAt(dict, path) {
 /** The shape of a dictionary key: `section.name`, or `section.group.name`. */
 const KEY_SHAPE = /^[a-z][\w]*(\.[A-Za-z]\w*)+$/;
 
-/** The keys (and plural bases) of the web's French dictionary, the reference the shared logic names its keys from. */
-let webKeySet;
-function webKeys() {
-  if (!webKeySet) {
-    const fr = JSON.parse(readFileSync(join(WEB_ROOT, "lib/i18n/dictionaries/fr.json"), "utf8"));
-    webKeySet = new Set(keyPaths(fr).flatMap((key) => [key, pluralBase(key) ?? key]));
-  }
-  return webKeySet;
+/** The keys (and plural bases) of the source dictionary, which shared logic names its keys from. */
+let sourceKeySet;
+function knownKeys() {
+  if (!sourceKeySet) sourceKeySet = new Set(sourceKeys.flatMap((key) => [key, pluralBase(key) ?? key]));
+  return sourceKeySet;
 }
 
 /**
@@ -473,7 +440,6 @@ function webKeys() {
  */
 function usedKeys(files) {
   const used = new Map();
-  const sharedDir = join(WEB_ROOT, SHARED_PERMISSIONS);
   for (const file of files) {
     const source = readFileSync(file, "utf8");
     const relPath = relative(ROOT, file);
@@ -487,15 +453,15 @@ function usedKeys(files) {
     for (const match of source.matchAll(/\b(?:t|key|tRef\.current)\(\s*["']([\w.]+)["']/g)) {
       record(match[1], match.index);
     }
-    // The shared permissions logic hands keys to the screens as plain strings (`"access.level.edit"`),
-    // so a string shaped like a key that the web's dictionary answers counts as asked for, in both apps.
-    if (file.startsWith(sharedDir)) {
+    // Shared logic hands keys to the screens as plain strings (`"access.level.edit"`), so a string
+    // shaped like a key that the dictionaries answer counts as asked for.
+    if (KEY_LITERAL_DIRS.some((dir) => file.startsWith(dir))) {
       for (const literal of source.matchAll(/["'`]([A-Za-z][\w]*(?:\.[A-Za-z]\w*)+)["'`]/g)) {
-        if (webKeys().has(literal[1])) record(literal[1], literal.index);
+        if (knownKeys().has(literal[1])) record(literal[1], literal.index);
       }
       // A key built from a template (`access.level.${kind}`): every key under its fixed head is asked for.
       for (const template of source.matchAll(/`([A-Za-z][\w]*(?:\.[A-Za-z]\w*)*\.)\$\{/g)) {
-        for (const key of webKeys()) if (key.startsWith(template[1])) record(pluralBase(key) ?? key, template.index);
+        for (const key of knownKeys()) if (key.startsWith(template[1])) record(pluralBase(key) ?? key, template.index);
       }
     }
     // `<Trans i18nKey={…}>` holds its key in an attribute, and sometimes chooses between two.
@@ -513,20 +479,21 @@ function usedKeys(files) {
  * new hard-coded string appears anywhere else. Two rules keep it honest: nothing may be added to it
  * (a new screen is written translated), and a file that has become clean is reported so the line goes.
  */
-// The mobile app was written translated from its first screen, so it has no debt file at all.
-const debt = new Set(APP.debt ? JSON.parse(readFileSync(join(ROOT, APP.debt), "utf8")).files : []);
+// An interface written translated from its first screen has no debt file at all.
+const debt = new Set(CONFIG.debt ? JSON.parse(readFileSync(resolve(ROOT, CONFIG.debt), "utf8")).files : []);
 
-const files = SCAN_DIRS.flatMap((dir) => walk(join(ROOT, dir)));
+const files = SCAN_DIRS.flatMap((dir) => walk(resolve(ROOT, dir)));
 const allFindings = files.flatMap((file) => findHardCoded(readFileSync(file, "utf8"), file));
 const frozenLocales = files.flatMap((file) => findFrozenLocales(readFileSync(file, "utf8"), file));
 const hardCoded = allFindings.filter((f) => !debt.has(f.file));
 const stillOwed = new Set(allFindings.filter((f) => debt.has(f.file)).map((f) => f.file));
 const settled = [...debt].filter((file) => !stillOwed.has(file));
 
-const dicts = loadDictionaries();
+const { dicts, issues } = loadDictionaries();
 const source = dicts.fr ?? {};
 const sourceKeys = keyPaths(source);
-const problems = [];
+const problems = [...issues];
+if (!dicts.fr) problems.push("no fr.json: French is the source every other language translates");
 
 /**
  * Plural suffixes are i18next's, and how many a key needs depends on the language, not on French.
@@ -594,7 +561,11 @@ const missing = [...used.entries()].filter(([key]) => {
   if (sourcePlain.has(key) || sourceBases.has(key)) return false;
   return true;
 });
-const unused = sourceKeys.filter((key) => !used.has(key) && !used.has(pluralBase(key) ?? key));
+// A product uses the shared sections it needs, not all of them: those are never reported unused.
+const isShared = (key) => !SHARED && RESERVED_SECTIONS.includes(key.split(".")[0]);
+const unused = SHARED
+  ? []
+  : sourceKeys.filter((key) => !isShared(key) && !used.has(key) && !used.has(pluralBase(key) ?? key));
 
 let failed = false;
 
@@ -605,8 +576,8 @@ if (hardCoded.length > 0) {
     console.error(`  ${finding.file}:${finding.line}  ${JSON.stringify(finding.text)}  [${finding.why}]`);
   }
   console.error(
-    `\nMove each into lib/i18n/dictionaries and call t("..."). For something that is not prose,\n` +
-      `add it to ALLOWED in this script, or mark the line with ${LINE_OPT_OUT} and say why.\n`,
+    `\nMove each into ${CONFIG.dictionaries} and call t("..."). For something that is not prose,\n` +
+      `add it to "allowed" in i18n.config.json, or mark the line with ${LINE_OPT_OUT} and say why.\n`,
   );
 }
 
@@ -619,7 +590,7 @@ if (frozenLocales.length > 0) {
   for (const finding of frozenLocales) {
     console.error(`  ${finding.file}:${finding.line}  ${finding.text}`);
   }
-  console.error(`\nFormat with the language in force (see lib/i18n/format.ts).\n`);
+  console.error(`\nFormat with the language in force (the format functions of @ruchoir/i18n).\n`);
 }
 
 if (missing.length > 0) {
@@ -635,7 +606,7 @@ if (settled.length > 0) {
   failed = true;
   console.error(
     `\n${settled.length} file(s) listed as untranslated carry no hard-coded text any more.\n` +
-      `Remove them from tools/i18n-audit/untranslated.json: the list only ever shrinks.\n`,
+      `Remove them from ${CONFIG.debt}: the list only ever shrinks.\n`,
   );
   for (const file of settled) console.error(`  ${file}`);
   console.error("");
@@ -651,8 +622,9 @@ if (duplicates.length > 0) {
     console.error(`  ${JSON.stringify(text)}\n    ${keys.join("\n    ")}`);
   }
   console.error(
-    `\nPoint every call site at one key. If two of them genuinely have to differ in another\n` +
-      `language, list the key in ALLOWED_DUPLICATES in this script and say why.\n`,
+    `\nPoint every call site at one key (a shared one when it exists). If two of them genuinely\n` +
+      `have to differ in another language, add the key to "allowedDuplicates" in i18n.config.json\n` +
+      `with the reason.\n`,
   );
 }
 

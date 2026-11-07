@@ -1,0 +1,5 @@
+{
+  "scan": ["src"],
+  "dictionaries": "dictionaries",
+  "shared": true
+}

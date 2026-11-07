@@ -1,0 +1,36 @@
+{
+  "name": "@ruchoir/i18n",
+  "version": "0.1.0",
+  "private": true,
+  "description": "How every Ruchoir interface speaks six languages: the languages, formatting in the language in force, the products' names, the shared sentences and the check that keeps the dictionaries honest.",
+  "license": "MIT OR Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./dictionaries/*.json": "./dictionaries/*.json"
+  },
+  "bin": {
+    "ruchoir-i18n-check": "./bin/i18n-check.mjs"
+  },
+  "files": [
+    "src",
+    "dictionaries",
+    "bin"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --test 'test/*.test.ts'",
+    "i18n:check": "node bin/i18n-check.mjs"
+  },
+  "dependencies": {
+    "typescript": "^6.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ruchoir/core",
+    "directory": "packages/i18n"
+  }
+}

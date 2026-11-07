@@ -6,21 +6,21 @@
  * written in French first and the other five are translations of it, so `fr` is what a missing key
  * falls back to.
  *
- * The application is a single page served by the API, so a language is not a route here (that is
- * how the public site does it, and it needs URLs a search engine can index). It is a property of
- * the person: read from their preferences, and from the browser the first time.
+ * In a product, a language is not a route (that is how the public site does it, and it needs URLs a
+ * search engine can index). It is a property of the person: read from their preferences, and from
+ * the browser or the phone the first time.
  */
 
-/** A language tag this application carries a full dictionary for. */
+/** A language tag every Ruchoir interface carries a full dictionary for. */
 export type Locale = "fr" | "en" | "es" | "de" | "it" | "pl";
 
 /**
  * Every locale the type allows, for validating a stored or submitted tag.
  *
- * Not what the language menu reads: that takes `AVAILABLE_LOCALES`, derived from the dictionaries
- * this build actually carries, so the menu can never offer a language whose dictionary is missing.
- * This list exists because validation runs in places that must not pull the dictionaries in (the
- * settings loader, which runs before anything renders).
+ * Not what a language menu reads: that takes the languages whose dictionaries the build actually
+ * carries, so the menu can never offer a language whose dictionary is missing. This list exists
+ * because validation runs in places that must not pull the dictionaries in (a settings loader that
+ * runs before anything renders).
  */
 export const LOCALES: Locale[] = ["fr", "en", "es", "de", "it", "pl"];
 
@@ -31,16 +31,20 @@ export const DEFAULT_LOCALE: Locale = "fr";
  * What each language calls itself. A language menu that named them in French would be self-defeating.
  *
  * i18n-audit-ignore-file is not what this needs, so the entries carry the marker themselves: these
- * are the one place in the application where a French-looking string is deliberately not translated.
+ * are the one place where a French-looking string is deliberately not translated.
  */
 export const LOCALE_NAMES: Record<Locale, string> = {
   // i18n-audit-ignore-next-line -- a language's own name, by definition not translated
   fr: "Français",
+  // i18n-audit-ignore-next-line -- a language's own name, by definition not translated
   en: "English",
   // i18n-audit-ignore-next-line -- a language's own name, by definition not translated
   es: "Español",
+  // i18n-audit-ignore-next-line -- a language's own name, by definition not translated
   de: "Deutsch",
+  // i18n-audit-ignore-next-line -- a language's own name, by definition not translated
   it: "Italiano",
+  // i18n-audit-ignore-next-line -- a language's own name, by definition not translated
   pl: "Polski",
 };
 
@@ -49,7 +53,7 @@ export const LOCALE_NAMES: Record<Locale, string> = {
  * English one.
  *
  * `Intl.DisplayNames` carries these, so there is no seventh dictionary to keep in step, and it knows
- * far more languages than the six this product is translated into: a profile can say what someone
+ * far more languages than the six Ruchoir is translated into: a profile can say what someone
  * reads even if Ruchoir does not speak it. Falls back to the tag itself where the browser has no
  * answer, which is better than an empty row.
  */

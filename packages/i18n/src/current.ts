@@ -6,7 +6,7 @@
  * it asks here, and the settings provider keeps this in step with what the interface is showing.
  */
 
-import { DEFAULT_LOCALE, isLocale, type Locale } from "./config";
+import { DEFAULT_LOCALE, isLocale, type Locale } from "./config.ts";
 
 let current: Locale = DEFAULT_LOCALE;
 
