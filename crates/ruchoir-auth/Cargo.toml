@@ -1,0 +1,39 @@
+[package]
+name = "ruchoir-auth"
+version.workspace = true
+description = "What a Ruchoir product needs from Propolis: verifying its access and logout tokens, and asking it for tokens as a client."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+# The versions are Propolis's, so a product and its identity provider build one tree.
+[dependencies]
+# JWT and JWK handling (Frank Denis, France; ISC), pure Rust: no C toolchain for a product's build.
+# Propolis signs with it; RUSTSEC-2023-0071 (its `rsa` dependency) is ignored by the organisation's
+# rules, with the reason recorded there.
+jwt-simple = { version = "0.15", default-features = false, features = ["pure-rust"] }
+# Fetching Propolis's key set and calling its token endpoint (Sean McArthur and community,
+# MIT/Apache-2.0), over rustls with the ring provider the products already use.
+reqwest = { version = "0.13.5", default-features = false, features = ["rustls-no-provider", "http2", "json"] }
+# TLS (rustls project, ISRG Prossimo; MIT/Apache-2.0/ISC) with ring (community, Apache-2.0 AND ISC),
+# chosen over AWS `aws-lc-rs`, as in the products.
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "logging", "tls12"] }
+# Claims and answers (serde community project, MIT/Apache-2.0).
+serde = { version = "1", features = ["derive"] }
+serde_json = { workspace = true }
+# The key cache's lock and the clock of its refreshes (tokio-rs community, MIT).
+tokio = { version = "1.53", features = ["sync", "time"] }
+# Assertion and token ids (uuid-rs community project, MIT/Apache-2.0).
+uuid = { workspace = true }
+# The token request body (Servo project, MIT/Apache-2.0).
+form_urlencoded = "1"
+
+[dev-dependencies]
+# The async test runtime (tokio-rs community, MIT).
+tokio = { version = "1.53", features = ["rt-multi-thread", "macros", "net"] }
+# A stand-in Propolis in the tests: its key set and token endpoint (tokio-rs community, MIT).
+axum = "0.8"
+# Reading the stand-in's forms (Servo project, MIT/Apache-2.0).
+form_urlencoded = "1"

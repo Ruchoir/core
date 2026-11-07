@@ -13,9 +13,9 @@ jobs:
     uses: Ruchoir/.github/.github/workflows/conventions.yml@v1
 
   rust:
-    uses: Ruchoir/.github/.github/workflows/rust.yml@v1.0.1
+    uses: Ruchoir/.github/.github/workflows/rust.yml@v1.9.0
     with:
-      rules-ref: v1.0.1
+      rules-ref: v1.9.0
 
   node:
     uses: Ruchoir/.github/.github/workflows/node.yml@v1.1.0
