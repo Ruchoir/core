@@ -1,6 +1,6 @@
 [package]
 name = "ruchoir-contract"
-version = "0.1.0"
+version.workspace = true
 description = "The check that a Ruchoir service's OpenAPI contract only grows inside a major version."
 edition.workspace = true
 rust-version.workspace = true

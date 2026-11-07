@@ -1,6 +1,6 @@
 [package]
 name = "ruchoir-events"
-version = "0.1.0"
+version.workspace = true
 description = "The format of Ruchoir's server-to-server events, their signature, and the frame the hub pushes to clients."
 edition.workspace = true
 rust-version.workspace = true

@@ -107,7 +107,7 @@ what is specific to this repository, and never contradicts this block.
 ## This repository
 
 The shared libraries of Ruchoir: the Rust crates and TypeScript packages that several products use,
-each published with its own version. A product reaches code it shares with another product only
+all released together under one version. A product reaches code it shares with another product only
 through a package of this repository.
 
 **Status:** being filled during the restructuring. Code comes from `Ruchoir/ruchoir` with its
@@ -129,14 +129,28 @@ history (`git filter-repo`), moved rather than rewritten.
 ### What will live here
 
 - The Propolis SDK, once Propolis exists (`Ruchoir/propolis`, `docs/design/openid-connect.md`).
-- Publication of the packages (GitHub Packages for npm, git tags for crates) with their own versions.
+
+### Releases
+
+- The version is `[workspace.package] version` in `Cargo.toml`, repeated in every
+  `packages/*/package.json`. `pnpm version:check` (run by the CI) refuses a crate or package that
+  disagrees.
+- Releasing: a pull request that bumps every version at once (SemVer: a breaking change to any crate
+  or package is a new major), then the tag `vX.Y.Z` on the merged commit.
+- The tag runs `.github/workflows/release.yml`: Rust and Node checks, the npm packages published to
+  GitHub Packages, a release with notes drawn from the commits. It deploys nothing.
+- A product reads a crate from the tag: `ruchoir-http = { git = "https://github.com/Ruchoir/core",
+  tag = "v0.1.0" }`. It reads a package from GitHub Packages, with
+  `@ruchoir:registry=https://npm.pkg.github.com` in its `.npmrc`, and pins the same version.
+- A product never mixes two versions of `core`: its crates and packages all name the same tag.
 
 ### Boundaries
 
 - Depends on no product and no service: nothing here knows the chat, the drive, the calendar,
   Propolis's internals or the hub.
 - Nothing product-specific: code moves here only when a second product needs it.
-- Every package is published with its own version, and consumers pin it.
+- One version for the whole repository (ADR 0013 of `Ruchoir/.github`): every crate and package
+  carries it, and consumers pin it.
 - `MIT OR Apache-2.0`, so other developers can embed what is here.
 
 ### Decisions that apply

@@ -1,7 +1,6 @@
 {
   "name": "@ruchoir/design-system",
   "version": "0.1.0",
-  "private": true,
   "description": "The Ruchoir design system: tokens, typefaces and React components, shared by every Ruchoir product.",
   "license": "MIT OR Apache-2.0",
   "type": "module",
@@ -43,6 +42,9 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "typescript": "^6.0.3"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   },
   "repository": {
     "type": "git",

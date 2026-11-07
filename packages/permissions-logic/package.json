@@ -1,7 +1,6 @@
 {
   "name": "@ruchoir/permissions-logic",
   "version": "0.1.0",
-  "private": true,
   "description": "What the permission screens of every Ruchoir client decide without drawing anything: roles, groups, guests, access, reasons, the journal and licences.",
   "license": "MIT OR Apache-2.0",
   "type": "module",
@@ -17,6 +16,9 @@
   },
   "devDependencies": {
     "typescript": "^6.0.3"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   },
   "repository": {
     "type": "git",

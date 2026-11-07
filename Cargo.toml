@@ -1,10 +1,12 @@
-# Cargo workspace of the shared Rust crates of Ruchoir. Each crate is versioned on its own and
-# consumed by the products through a git tag of this repository.
+# Cargo workspace of the shared Rust crates of Ruchoir. Every crate carries the version of the
+# repository, and products read them from its release tag (`tag = "vX.Y.Z"`, ADR 0013 of
+# Ruchoir/.github).
 [workspace]
 resolver = "2"
 members = ["crates/*"]
 
 [workspace.package]
+version = "0.1.0"
 edition = "2021"
 rust-version = "1.96"
 license = "MIT OR Apache-2.0"

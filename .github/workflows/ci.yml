@@ -20,4 +20,4 @@ jobs:
   node:
     uses: Ruchoir/.github/.github/workflows/node.yml@v1.1.0
     with:
-      scripts: typecheck test
+      scripts: version:check typecheck test
