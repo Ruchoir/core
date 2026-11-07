@@ -10,6 +10,7 @@
   },
   "scripts": {
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test"
+    "test": "pnpm -r test",
+    "version:check": "node scripts/check-version.mjs"
   }
 }

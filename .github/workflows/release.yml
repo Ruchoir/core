@@ -1,0 +1,65 @@
+# A tag vX.Y.Z publishes that version of every package of this repository, and deploys nothing
+# (ADR 0013 of Ruchoir/.github).
+#
+# - The crates need no publication: products read them from the tag with Cargo.
+# - The npm packages are published to GitHub Packages (npm.pkg.github.com), under @ruchoir.
+# - A GitHub release is written with notes drawn from the commits.
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+
+jobs:
+  rust:
+    uses: Ruchoir/.github/.github/workflows/rust.yml@v1.0.1
+    with:
+      rules-ref: v1.0.1
+
+  node:
+    uses: Ruchoir/.github/.github/workflows/node.yml@v1.1.0
+    with:
+      scripts: version:check typecheck test
+
+  publish:
+    name: Publish
+    needs: [rust, node]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Check out the tag
+        uses: actions/checkout@v7.0.1
+
+      - name: Set up Node for GitHub Packages
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .nvmrc
+          registry-url: https://npm.pkg.github.com
+          scope: "@ruchoir"
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Check the tag names the version
+        run: node scripts/check-version.mjs "$GITHUB_REF_NAME"
+
+      - name: Ship the licence texts in every package
+        run: for package in packages/*/; do cp LICENSE-MIT LICENSE-APACHE "$package"; done
+
+      - name: Publish the npm packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm -r publish --no-git-checks
+
+      - name: Write the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes --title "$GITHUB_REF_NAME"

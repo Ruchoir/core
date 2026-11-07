@@ -1,7 +1,6 @@
 {
   "name": "@ruchoir/i18n",
   "version": "0.1.0",
-  "private": true,
   "description": "How every Ruchoir interface speaks six languages: the languages, formatting in the language in force, the products' names, the shared sentences and the check that keeps the dictionaries honest.",
   "license": "MIT OR Apache-2.0",
   "type": "module",
@@ -27,6 +26,9 @@
   },
   "devDependencies": {
     "@types/node": "^26.4.0"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   },
   "repository": {
     "type": "git",

@@ -1,6 +1,6 @@
 [package]
 name = "ruchoir-http"
-version = "0.1.0"
+version.workspace = true
 description = "The generic HTTP layer every Ruchoir service puts in front of its routes."
 edition.workspace = true
 rust-version.workspace = true

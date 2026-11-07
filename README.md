@@ -1,7 +1,7 @@
 # Ruchoir core
 
 The shared libraries of Ruchoir: the Rust crates and TypeScript packages that several products use,
-each published with its own version. A product reaches code it shares with another product only
+all released together under one version. A product reaches code it shares with another product only
 through a package of this repository.
 
 > In construction: part of the restructuring of Ruchoir into separate products. Nothing runs here yet.
