@@ -124,10 +124,10 @@ history (`git filter-repo`), moved rather than rewritten.
 | `packages/design-system` | `@ruchoir/design-system`: tokens, typefaces and React components (its own `AGENTS.md`) | `packages/design-system` |
 | `packages/client-base` | `@ruchoir/client-base`: the transport every client uses; each product says which of its writes are background ones (its own `AGENTS.md`) | `packages/client/src/{http,config,multipart}.ts` |
 | `packages/permissions-logic` | `@ruchoir/permissions-logic`: the clients' permission logic, on structural types (its own `AGENTS.md`) | `packages/client/src/permissionsLogic` |
+| `packages/i18n` | `@ruchoir/i18n`: languages, formatting, product names, the shared `common` and `error` sentences, and `ruchoir-i18n-check` (its own `AGENTS.md`) | `apps/web/lib/i18n/{config,current,format}.ts`, `apps/web/tools/i18n-audit` |
 
 ### What will live here
 
-- The interface text tooling (`i18n:check`) and the strings shared by several products.
 - The Propolis SDK, once Propolis exists (`Ruchoir/propolis`, `docs/design/openid-connect.md`).
 - Publication of the packages (GitHub Packages for npm, git tags for crates) with their own versions.
 
