@@ -1,0 +1,25 @@
+{
+  "common": {
+    "loading": "Loading…",
+    "sending": "Sending…",
+    "creating": "Creating…",
+    "copied": "Copied",
+    "close": "Close",
+    "back": "Back",
+    "remove": "Remove",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "save": "Save",
+    "create": "Create",
+    "search": "Search",
+    "help": "Help",
+    "retry": "Try again",
+    "tryAgain": "Try again in a moment.",
+    "or": "or"
+  },
+  "error": {
+    "sessionExpired": "Your session has expired. Sign in again.",
+    "serverUnreachable": "The server is unreachable. Try again later.",
+    "tooManyAttempts": "Too many attempts. Try again in a few minutes."
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "common": {
+    "loading": "Cargando…",
+    "sending": "Enviando…",
+    "creating": "Creando…",
+    "copied": "Copiado",
+    "close": "Cerrar",
+    "back": "Volver",
+    "remove": "Quitar",
+    "delete": "Eliminar",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "create": "Crear",
+    "search": "Buscar",
+    "help": "Ayuda",
+    "retry": "Reintentar",
+    "tryAgain": "Inténtalo de nuevo en un momento.",
+    "or": "o"
+  },
+  "error": {
+    "sessionExpired": "Tu sesión ha caducado. Vuelve a iniciar sesión.",
+    "serverUnreachable": "El servidor no responde. Inténtalo más tarde.",
+    "tooManyAttempts": "Demasiados intentos. Inténtalo de nuevo en unos minutos."
+  }
+}
