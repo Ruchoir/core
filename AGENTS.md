@@ -121,6 +121,7 @@ history (`git filter-repo`), moved rather than rewritten.
 | `crates/ruchoir-contract` | `breaking_changes`: what a newer OpenAPI contract breaks for a client of the older one | the `contract` module of `apps/api/src/compat.rs` |
 | `crates/ruchoir-http` | The HTTP layer of every service: Problem Details errors, security headers, same-site guard, cache policy, trace context, client address | written from `apps/api/src/http.rs`, `config.rs`, `messaging/error.rs` |
 | `crates/ruchoir-events` | Signed server-to-server events (Ed25519) and the frame the hub pushes to clients | written from `apps/api/src/realtime/event.rs` |
+| `crates/ruchoir-auth` | What a product needs from Propolis: its key set, cached; access and logout tokens checked; `private_key_jwt`, `client_credentials` and the token exchange | new, from Propolis's design (`Ruchoir/propolis`, `docs/design/openid-connect.md`) |
 | `packages/design-system` | `@ruchoir/design-system`: tokens, typefaces and React components (its own `AGENTS.md`) | `packages/design-system` |
 | `packages/client-base` | `@ruchoir/client-base`: the transport every client uses; each product says which of its writes are background ones (its own `AGENTS.md`) | `packages/client/src/{http,config,multipart}.ts` |
 | `packages/permissions-logic` | `@ruchoir/permissions-logic`: the clients' permission logic, on structural types (its own `AGENTS.md`) | `packages/client/src/permissionsLogic` |
@@ -128,7 +129,7 @@ history (`git filter-repo`), moved rather than rewritten.
 
 ### What will live here
 
-- The Propolis SDK, once Propolis exists (`Ruchoir/propolis`, `docs/design/openid-connect.md`).
+- The rest of the Propolis SDK in `ruchoir-auth`: a product's browser session (backend-for-frontend), its sign-in, callback, sign-out and back-channel routes.
 
 ### Releases
 
