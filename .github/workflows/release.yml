@@ -51,8 +51,8 @@ jobs:
       - name: Check the tag names the version
         run: node scripts/check-version.mjs "$GITHUB_REF_NAME"
 
-      - name: Ship the licence texts in every package
-        run: for package in packages/*/; do cp LICENSE-MIT LICENSE-APACHE "$package"; done
+      - name: Ship the licence text in every package
+        run: for package in packages/*/; do cp LICENSE "$package"; done
 
       - name: Publish the npm packages
         env:
