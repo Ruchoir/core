@@ -1,0 +1,179 @@
+/**
+ * Numbers, dates and sizes, in the language in force.
+ *
+ * These used to be formatted with the language written into the call ("fr-FR"), which is the same
+ * mistake as a hard-coded sentence and harder to see: nothing about `toLocaleDateString("fr-FR")`
+ * looks like French text, and it still showed "7 sept." to a Polish reader. Everything that turns a
+ * value into something a person reads goes through here.
+ *
+ * The language is read at call time rather than captured, so the screens that re-render on a change
+ * of language draw their dates in the new one without refetching anything.
+ */
+
+import { currentLocale } from "./current";
+import type { Locale } from "./config";
+
+/** Time of day: "17:45" in French, "5:45 PM" where that is what a clock says. */
+export function formatTime(at: Date | string | number, locale: Locale = currentLocale()): string {
+  const date = new Date(at);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(date);
+}
+
+/** Day and month, short: "7 sept.", "Sep 7", "7 wrz". */
+export function formatShortDate(at: Date | string | number, locale: Locale = currentLocale()): string {
+  const date = new Date(at);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" }).format(date);
+}
+
+/** Date alone, long: "20 novembre 2026". */
+export function formatLongDate(at: Date | string | number, locale: Locale = currentLocale()): string {
+  const date = new Date(at);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat(locale, { dateStyle: "long" }).format(date);
+}
+
+/** Day and month in full, no year: "20 novembre", "November 20". */
+export function formatDayMonth(at: Date | string | number, locale: Locale = currentLocale()): string {
+  const date = new Date(at);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat(locale, { day: "numeric", month: "long" }).format(date);
+}
+
+/** Full date and time, for a tooltip or a detail line. */
+export function formatDateTime(at: Date | string | number, locale: Locale = currentLocale()): string {
+  const date = new Date(at);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(date);
+}
+
+/**
+ * A day fixed in universal time, medium length: a licence ends at an instant its issuer chose in
+ * UTC (the last second of the 31st), which the reader's own zone would push to the next day.
+ */
+export function formatUtcDate(at: Date | string | number, locale: Locale = currentLocale()): string {
+  const date = new Date(at);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(date);
+}
+
+/** Date alone, medium length: for a key added on, a session opened on. */
+export function formatDate(at: Date | string | number, locale: Locale = currentLocale()): string {
+  const date = new Date(at);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(date);
+}
+
+function sameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+/**
+ * The word for the day before today, in the reader's language.
+ *
+ * From `Intl.RelativeTimeFormat` rather than the dictionary: every language already has this word in
+ * the browser, and six translations of "hier" is six entries that can only ever be wrong.
+ */
+function yesterdayWord(locale: Locale): string {
+  const word = new Intl.RelativeTimeFormat(locale, { numeric: "auto" }).format(-1, "day");
+  return word.charAt(0).toLocaleUpperCase(locale) + word.slice(1);
+}
+
+/**
+ * How a message or a file is stamped in a list: the time today, "Yesterday, 17:45" the day before,
+ * and a short date beyond that. The gutter is narrow, so the longer forms are for hovering.
+ */
+export function formatStamp(at: Date | string | number, locale: Locale = currentLocale()): string {
+  const date = new Date(at);
+  if (Number.isNaN(date.getTime())) return "";
+  const now = new Date();
+  if (sameDay(date, now)) return formatTime(date, locale);
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (sameDay(date, yesterday)) return `${yesterdayWord(locale)}, ${formatTime(date, locale)}`;
+  return formatShortDate(date, locale);
+}
+
+/**
+ * When something happened, relative to today, for the middle of a sentence: "aujourd'hui, 10:12",
+ * "hier, 17:45", then a short date. Lower case, unlike `formatStamp`, which heads a line.
+ */
+export function formatRelativeStamp(at: Date | string | number, locale: Locale = currentLocale()): string {
+  const date = new Date(at);
+  if (Number.isNaN(date.getTime())) return "";
+  const now = new Date();
+  const days = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  if (sameDay(date, now)) return `${days.format(0, "day")}, ${formatTime(date, locale)}`;
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (sameDay(date, yesterday)) return `${days.format(-1, "day")}, ${formatTime(date, locale)}`;
+  return formatShortDate(date, locale);
+}
+
+/**
+ * The heading of a day in a conversation, for any day but today (which the dictionary names):
+ * "Hier", then the weekday and the date, "lundi 21 septembre", with the year once it is not this one.
+ * Capitalised, since it stands alone.
+ */
+export function formatDayHeading(at: Date | string | number, locale: Locale = currentLocale()): string {
+  const date = new Date(at);
+  if (Number.isNaN(date.getTime())) return "";
+  const now = new Date();
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (sameDay(date, yesterday)) return yesterdayWord(locale);
+  const text = new Intl.DateTimeFormat(locale, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: date.getFullYear() === now.getFullYear() ? undefined : "numeric",
+  }).format(date);
+  return text.charAt(0).toLocaleUpperCase(locale) + text.slice(1);
+}
+
+/** Whether two instants fall on the same calendar day, where the reader is. */
+export function isSameDay(a: Date | string | number, b: Date | string | number): boolean {
+  return sameDay(new Date(a), new Date(b));
+}
+
+/** Decimal units, as storage is sold and as every file manager counts it. */
+const BYTE_UNITS = ["byte", "kilobyte", "megabyte", "gigabyte", "terabyte"] as const;
+
+/**
+ * A byte count in the reader's language: "78 octets", "3,4 Mo", "3.4 MB", "3,4 MB".
+ *
+ * `Intl.NumberFormat` carries both halves of what changes between languages: the unit's name and
+ * the decimal separator. Writing "Ko" and swapping the point for a comma by hand got French right
+ * and every other language wrong.
+ *
+ * Bytes themselves are spelled out ("78 octets", "78 bytes", "1 bajt"): the short form is a bare
+ * letter in several languages ("78 o", "78 B") that reads as a typo, and English's short form does
+ * not even agree in number ("2 byte"). The larger units stay short, where the abbreviation is what
+ * everybody reads.
+ */
+export function formatBytes(bytes: number, locale: Locale = currentLocale()): string {
+  let value = Math.max(0, bytes);
+  let unit = 0;
+  while (value >= 1000 && unit < BYTE_UNITS.length - 1) {
+    value /= 1000;
+    unit += 1;
+  }
+  const decimals = unit === 0 || value >= 100 ? 0 : 1;
+  return new Intl.NumberFormat(locale, {
+    style: "unit",
+    unit: BYTE_UNITS[unit],
+    unitDisplay: unit === 0 ? "long" : "short",
+    maximumFractionDigits: decimals,
+  }).format(value);
+}
+
+/** A plain count, grouped the way the language groups thousands. */
+export function formatNumber(value: number, locale: Locale = currentLocale()): string {
+  return new Intl.NumberFormat(locale).format(value);
+}
+
+/** A list of names in the language in force: "Nadia et Paul", "Nadia, Paul et Léa". */
+export function formatList(items: string[], locale: Locale = currentLocale()): string {
+  return new Intl.ListFormat(locale, { style: "long", type: "conjunction" }).format(items);
+}
