@@ -151,7 +151,8 @@ history (`git filter-repo`), moved rather than rewritten.
 - Nothing product-specific: code moves here only when a second product needs it.
 - One version for the whole repository (ADR 0013 of `Ruchoir/.github`): every crate and package
   carries it, and consumers pin it.
-- `MIT OR Apache-2.0`, so other developers can embed what is here.
+- `MPL-2.0` (ADR 0014 of `Ruchoir/.github`): a copyleft per file, so other developers can embed what
+  is here in code under any licence, and share back the files of it they change.
 
 ### Decisions that apply
 
@@ -161,7 +162,9 @@ history (`git filter-repo`), moved rather than rewritten.
   versioning](https://github.com/Ruchoir/.github/blob/main/docs/adr/0005-api-contracts-and-versioning.md)
 - [0006. Service-to-service
   authentication](https://github.com/Ruchoir/.github/blob/main/docs/adr/0006-service-to-service-authentication.md)
-- [0007. Licences](https://github.com/Ruchoir/.github/blob/main/docs/adr/0007-licences.md)
+- [0007. Licences](https://github.com/Ruchoir/.github/blob/main/docs/adr/0007-licences.md), superseded
+  for this repository by [0014. Ruchoir/core is public, under the
+  MPL-2.0](https://github.com/Ruchoir/.github/blob/main/docs/adr/0014-core-under-the-mpl.md)
 
 This repository's own decisions go in `docs/adr/`.
 
@@ -176,4 +179,4 @@ This repository's own decisions go in `docs/adr/`.
 - A permission name is never renamed or removed, and its position never moves: record an addition
   with `RUCHOIR_UPDATE_CONTRACT=1 cargo test -p ruchoir-permissions the_permission_catalogue_only_grows`.
 
-Licence: `MIT OR Apache-2.0`, at your option (`LICENSE-MIT`, `LICENSE-APACHE`).
+Licence: `MPL-2.0` (`LICENSE`), see the README and ADR 0014 of `Ruchoir/.github`.

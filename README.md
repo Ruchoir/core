@@ -12,4 +12,11 @@ through a package of this repository.
 
 ## Licence
 
-`MIT OR Apache-2.0`, at your option (`LICENSE-MIT`, `LICENSE-APACHE`).
+`MPL-2.0` ([`LICENSE`](LICENSE)), the Mozilla Public License 2.0:
+
+> This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the
+> MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+A changed file of this repository, once shipped, is shared under the same licence. What is here can
+be combined with code under any other licence. Versions up to `v0.1.0` were released under
+`MIT OR Apache-2.0`. Fonts keep their own licence (OFL), see `packages/design-system/fonts`.
