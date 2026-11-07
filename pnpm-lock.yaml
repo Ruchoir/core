@@ -51,6 +51,16 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
+  packages/i18n:
+    dependencies:
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+    devDependencies:
+      '@types/node':
+        specifier: ^26.4.0
+        version: 26.6.6
+
   packages/permissions-logic:
     devDependencies:
       typescript:

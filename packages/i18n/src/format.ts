@@ -10,8 +10,8 @@
  * of language draw their dates in the new one without refetching anything.
  */
 
-import { currentLocale } from "./current";
-import type { Locale } from "./config";
+import { currentLocale } from "./current.ts";
+import type { Locale } from "./config.ts";
 
 /** Time of day: "17:45" in French, "5:45 PM" where that is what a clock says. */
 export function formatTime(at: Date | string | number, locale: Locale = currentLocale()): string {
