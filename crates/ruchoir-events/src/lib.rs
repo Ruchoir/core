@@ -8,13 +8,16 @@
 //! - [`frame`]: a [`ClientFrame`] the hub pushes to connected pages and apps, and the
 //!   [`Publication`] a product hands the hub to get it delivered to the audience it computed
 //!   (ADR 0003 of `Ruchoir/.github`).
+//! - [`grant`]: a product's short grant over a file another product keeps for it, signed with its
+//!   event key, checked without calling it.
 //!
 //! Nothing here knows a product: the event kinds, their payloads, the frame types and what a scope
-//! means all belong to the product that emits them. How events travel between services (through the
-//! hub or by webhooks) is not decided yet; this crate only fixes what travels.
+//! means all belong to the product that emits them. Events travel through the hub (ADR 0015); this crate
+//! only fixes what travels.
 
 pub mod event;
 pub mod frame;
+pub mod grant;
 pub mod signature;
 
 pub use event::{Event, Kind, KindError};
