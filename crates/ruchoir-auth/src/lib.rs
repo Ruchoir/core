@@ -10,7 +10,9 @@
 //!   it asks in its own name (`client_credentials`) or for the person who called it (the token
 //!   exchange, RFC 8693).
 //!
-//! The browser session of a product (its backend-for-frontend) comes on top of these.
+//! - [`session`]: a product's browser session, as a backend-for-frontend of Propolis: sign-in by
+//!   code and PKCE, an opaque `__Host-` cookie, tokens kept and refreshed in the product's store,
+//!   RP-Initiated and back-channel logout.
 //!
 //! Every check is done here once, so no product writes its own: a product that verifies a token
 //! with this crate verifies it as every other product does.
@@ -19,11 +21,15 @@ pub mod access;
 pub mod client;
 pub mod keys;
 pub mod logout;
+pub mod session;
 
 pub use access::{AccessToken, Rejected, Verifier};
 pub use client::{Client, ClientError, Credentials, TokenSet};
 pub use keys::KeySet;
 pub use logout::LogoutNotice;
+#[cfg(feature = "valkey")]
+pub use session::ValkeyStore;
+pub use session::{Active, Bff, BffConfig, BffError, Callback, Finished, MemoryStore, Store};
 
 /// The clock skew every check accepts, as Propolis does.
 pub const SKEW_SECS: u64 = 60;
