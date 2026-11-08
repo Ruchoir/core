@@ -29,6 +29,18 @@ tokio = { version = "1.53", features = ["sync", "time"] }
 uuid = { workspace = true }
 # The token request body (Servo project, MIT/Apache-2.0).
 form_urlencoded = "1"
+# The PKCE challenge (RustCrypto, community, MIT/Apache-2.0).
+sha2 = "0.11"
+# The challenge and random values in base64url (marshallpierce/rust-base64, community, MIT/Apache-2.0).
+base64 = { version = "0.23.1", default-features = false, features = ["alloc"] }
+# State, nonce, verifier and session ids from the operating system (rust-random community,
+# MIT/Apache-2.0).
+getrandom = "0.4"
+# The products' session store in their Valkey (Alec Embke and community, MIT), with `valkey`.
+fred = { version = "10.1.0", optional = true }
+
+[features]
+valkey = ["dep:fred"]
 
 [dev-dependencies]
 # The async test runtime (tokio-rs community, MIT).
