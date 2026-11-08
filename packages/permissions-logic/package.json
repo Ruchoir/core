@@ -1,6 +1,6 @@
 {
   "name": "@ruchoir/permissions-logic",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "What the permission screens of every Ruchoir client decide without drawing anything: roles, groups, guests, access, reasons, the journal and licences.",
   "license": "MPL-2.0",
   "type": "module",

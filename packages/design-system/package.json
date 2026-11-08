@@ -1,6 +1,6 @@
 {
   "name": "@ruchoir/design-system",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "The Ruchoir design system: tokens, typefaces and React components, shared by every Ruchoir product.",
   "license": "MPL-2.0",
   "type": "module",
