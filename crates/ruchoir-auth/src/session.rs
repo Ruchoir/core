@@ -345,6 +345,10 @@ struct Record {
     refresh_token: Option<String>,
     opened_at: u64,
     seen_at: u64,
+    /// What the ID token said of the person when they signed in (absent in sessions opened before
+    /// it was kept).
+    #[serde(default)]
+    profile: Profile,
 }
 
 /// A live session, as a product's handler uses it.
@@ -357,6 +361,8 @@ pub struct Active {
     /// A valid access token for the product, to call its own API in the person's name or to
     /// exchange for another product's (RFC 8693).
     pub access_token: String,
+    /// Their name, language and time zone, as Propolis said when they signed in.
+    pub profile: Profile,
 }
 
 /// Where a finished sign-in leads.
@@ -382,6 +388,29 @@ pub struct Callback {
 struct IdClaims {
     #[serde(default)]
     sid: Option<String>,
+    /// The person's display name, with the `profile` scope.
+    #[serde(default)]
+    name: Option<String>,
+    /// Their language, with the `profile` scope.
+    #[serde(default)]
+    locale: Option<String>,
+    /// Their time zone, with the `profile` scope.
+    #[serde(default)]
+    zoneinfo: Option<String>,
+}
+
+/// What the ID token says of the person, beyond who they are.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Profile {
+    /// Their display name, as others see it.
+    #[serde(default)]
+    pub name: Option<String>,
+    /// Their language (`fr`, `en-GB`).
+    #[serde(default)]
+    pub locale: Option<String>,
+    /// Their time zone (`Europe/Paris`).
+    #[serde(default)]
+    pub zoneinfo: Option<String>,
 }
 
 fn now() -> u64 {
@@ -536,7 +565,7 @@ impl<S: Store> Bff<S> {
             .id_token
             .clone()
             .ok_or(BffError::Invalid("id_token"))?;
-        let (sub, sid) = self.check_id_token(&id_token, &pending.nonce).await?;
+        let (sub, sid, profile) = self.check_id_token(&id_token, &pending.nonce).await?;
         let at = now();
         let record = Record {
             sub: sub.clone(),
@@ -547,6 +576,7 @@ impl<S: Store> Bff<S> {
             refresh_token: tokens.refresh_token,
             opened_at: at,
             seen_at: at,
+            profile,
         };
         let id = random()?;
         self.keep(&id, &record).await?;
@@ -573,7 +603,7 @@ impl<S: Store> Bff<S> {
         &self,
         token: &str,
         nonce: &str,
-    ) -> Result<(String, Option<String>), BffError> {
+    ) -> Result<(String, Option<String>, Profile), BffError> {
         let metadata = Token::decode_metadata(token).map_err(|_| BffError::Invalid("id_token"))?;
         let kid = metadata.key_id().ok_or(BffError::Invalid("id_token"))?;
         if metadata.algorithm() != "ES256" {
@@ -595,7 +625,13 @@ impl<S: Store> Bff<S> {
             .verify_token::<IdClaims>(token, Some(options))
             .map_err(|_| BffError::Invalid("id_token"))?;
         let sub = claims.subject.ok_or(BffError::Invalid("id_token"))?;
-        Ok((sub, claims.custom.sid))
+        let custom = claims.custom;
+        let profile = Profile {
+            name: custom.name,
+            locale: custom.locale,
+            zoneinfo: custom.zoneinfo,
+        };
+        Ok((sub, custom.sid, profile))
     }
 
     /// Store a session for what is left of its idle and absolute windows.
@@ -637,6 +673,7 @@ impl<S: Store> Bff<S> {
             sub: record.sub,
             sid: record.sid,
             access_token: record.access_token,
+            profile: record.profile,
         })
     }
 

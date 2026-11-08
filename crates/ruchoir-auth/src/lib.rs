@@ -29,7 +29,9 @@ pub use keys::KeySet;
 pub use logout::LogoutNotice;
 #[cfg(feature = "valkey")]
 pub use session::ValkeyStore;
-pub use session::{Active, Bff, BffConfig, BffError, Callback, Finished, MemoryStore, Store};
+pub use session::{
+    Active, Bff, BffConfig, BffError, Callback, Finished, MemoryStore, Profile, Store,
+};
 
 /// The clock skew every check accepts, as Propolis does.
 pub const SKEW_SECS: u64 = 60;
