@@ -1,6 +1,6 @@
 {
   "name": "@ruchoir/i18n",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "How every Ruchoir interface speaks six languages: the languages, formatting in the language in force, the products' names, the shared sentences and the check that keeps the dictionaries honest.",
   "license": "MPL-2.0",
   "type": "module",
