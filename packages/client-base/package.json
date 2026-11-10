@@ -1,6 +1,6 @@
 {
   "name": "@ruchoir/client-base",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "The transport every Ruchoir API client is built on: where requests go, how they prove who is asking, errors, retries and the read only preview.",
   "license": "MPL-2.0",
   "type": "module",
