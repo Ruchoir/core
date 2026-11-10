@@ -122,10 +122,12 @@ history (`git filter-repo`), moved rather than rewritten.
 | `crates/ruchoir-http` | The HTTP layer of every service: Problem Details errors, security headers, same-site guard, cache policy, trace context, client address | written from `apps/api/src/http.rs`, `config.rs`, `messaging/error.rs` |
 | `crates/ruchoir-events` | Signed server-to-server events (Ed25519), the frame the hub pushes to clients, and a product's signed grant over a file another product keeps for it | written from `apps/api/src/realtime/event.rs` |
 | `crates/ruchoir-auth` | What a product needs from Propolis: its key set, cached; access and logout tokens checked; `private_key_jwt`, `client_credentials` and the token exchange; a product's browser session (`session`: sign-in by code and PKCE, an opaque `__Host-` cookie, tokens refreshed once across processes, RP-Initiated and back-channel logout), its store in Valkey with the `valkey` feature | new, from Propolis's design (`Ruchoir/propolis`, `docs/design/openid-connect.md`) |
+| `crates/ruchoir-native` | How the desktop's core signs in with Propolis (RFC 8252): discovery of an instance (the hub's manifest, each product's description), sign-in by code and `S256` PKCE through a loopback redirect with `state`, `nonce` and `iss` checked, one refresh token per issuer in the keychain (`Storage`), one access token per product in memory, revocation on sign-out | new, from Propolis's design, section 11 |
 | `packages/design-system` | `@ruchoir/design-system`: tokens, typefaces and React components (its own `AGENTS.md`) | `packages/design-system` |
 | `packages/client-base` | `@ruchoir/client-base`: the transport every client uses; each product says which of its writes are background ones (its own `AGENTS.md`) | `packages/client/src/{http,config,multipart}.ts` |
 | `packages/permissions-logic` | `@ruchoir/permissions-logic`: the clients' permission logic, on structural types (its own `AGENTS.md`) | `packages/client/src/permissionsLogic` |
 | `packages/i18n` | `@ruchoir/i18n`: languages, formatting, product names, the shared `common` and `error` sentences, and `ruchoir-i18n-check` (its own `AGENTS.md`) | `apps/web/lib/i18n/{config,current,format}.ts`, `apps/web/tools/i18n-audit` |
+| `packages/native-client` | `@ruchoir/native-client`: the same as `ruchoir-native` in TypeScript for the apps, over the platform functions the app injects (Expo, a Tauri webview, Node) (its own `AGENTS.md`) | new, from Propolis's design, section 11 |
 
 ### What will live here
 
