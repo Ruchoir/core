@@ -48,7 +48,10 @@ async fn token(State(p): State<Propolis>, body: String) -> (StatusCode, Json<Val
             if get("code").as_deref() != Some("c1") || challenge(&verifier) != expected {
                 return refused("invalid_grant");
             }
-            let claims = Claims::with_custom_claims(json!({ "sid": "s1" }), Duration::from_mins(5))
+            let claims = Claims::with_custom_claims(
+                json!({ "sid": "s1", "name": "Ada Lovelace", "locale": "en-GB", "zoneinfo": "Europe/London" }),
+                Duration::from_mins(5),
+            )
                 .with_issuer(&issuer)
                 .with_audience("drive")
                 .with_subject("person-1")
@@ -198,6 +201,10 @@ async fn a_person_signs_in_and_the_token_is_refreshed_once() {
     let first = s.bff.session(&id).await.unwrap();
     assert_eq!(first.sub, "person-1");
     assert_eq!(first.sid.as_deref(), Some("s1"));
+    // What the ID token said of the person stays with the session.
+    assert_eq!(first.profile.name.as_deref(), Some("Ada Lovelace"));
+    assert_eq!(first.profile.locale.as_deref(), Some("en-GB"));
+    assert_eq!(first.profile.zoneinfo.as_deref(), Some("Europe/London"));
     assert_eq!(first.access_token, "a2", "thirty seconds left: refreshed");
     let second = s.bff.session(&id).await.unwrap();
     assert_eq!(second.access_token, "a2");
