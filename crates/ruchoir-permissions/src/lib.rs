@@ -1,4 +1,4 @@
-//! The permission model shared by every Ruchoir product (ADR 0009 of `Ruchoir/ruchoir`).
+//! The permission model shared by every Ruchoir product (ADR 0001 of this repository).
 //!
 //! - [`catalogue`]: the named permissions, as a `u64` set. A name is never renamed or removed and
 //!   its position never moves (`the_permission_catalogue_only_grows`).
