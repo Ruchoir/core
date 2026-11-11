@@ -55,6 +55,8 @@ pub enum NativeError {
     Storage(String),
     /// The browser could not be opened, or did not come back.
     Browser(String),
+    /// The extra certificate authority (see [`crate::http_client`]) could not be read or parsed.
+    Certificate(String),
 }
 
 impl std::fmt::Display for NativeError {
@@ -71,6 +73,7 @@ impl std::fmt::Display for NativeError {
             Self::SignedOut => f.write_str("no grant for this issuer"),
             Self::Storage(why) => write!(f, "storage error: {why}"),
             Self::Browser(why) => write!(f, "browser error: {why}"),
+            Self::Certificate(why) => write!(f, "extra certificate authority: {why}"),
         }
     }
 }

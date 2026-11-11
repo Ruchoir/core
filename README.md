@@ -23,7 +23,7 @@ drawn with `@ruchoir/design-system`. Core depends on none of them. How the piece
 | `ruchoir-contract` | The check that a service's OpenAPI contract only grows inside a major version |
 | `ruchoir-events` | Signed server-to-server events, the frame the hub pushes to clients, and a product's signed grant over a file another product keeps |
 | `ruchoir-http` | The HTTP layer every service puts in front of its routes: Problem Details errors, security headers, cache policy, trace context, client address |
-| `ruchoir-native` | How the desktop's core signs in with Propolis (RFC 8252): discovery of an instance, code and PKCE through a loopback redirect, one token per product |
+| `ruchoir-native` | How the desktop's core signs in with Propolis (RFC 8252): discovery of an instance, code and PKCE through a loopback redirect, one token per product; trusts the system store plus an optional extra authority (`RUCHOIR_EXTRA_CA`, a PEM file) for development instances |
 | `ruchoir-permissions` | The permission catalogue, the system roles and the pure resolution engine ([ADR 0001](docs/adr/0001-permission-model.md)) |
 | `@ruchoir/client-base` | The transport every API client is built on: where requests go, how they prove who is asking, errors and retries |
 | `@ruchoir/design-system` | Tokens, typefaces and React components |
