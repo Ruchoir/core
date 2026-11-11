@@ -25,16 +25,51 @@ pub use discovery::{Instance, IssuerMetadata, Product, ProductDescription};
 pub use redirect::{Browser, Loopback, Redirect};
 pub use storage::{MemoryStorage, Storage};
 
-/// The HTTP client of the crate: rustls with the ring provider, no redirect followed, a short
-/// timeout.
-pub fn http_client() -> reqwest::Result<reqwest::Client> {
+/// The environment variable naming a PEM file of extra certificate authorities, trusted besides
+/// the system's: a development instance's own authority (`ruchoir-install dev`), which the system
+/// store does not hold.
+pub const EXTRA_CA_ENV: &str = "RUCHOIR_EXTRA_CA";
+
+/// The HTTP client of the crate: rustls with the ring provider, certificates checked by the
+/// platform verifier (the system store), no redirect followed, a short timeout.
+///
+/// When [`EXTRA_CA_ENV`] names a PEM file, its authorities are trusted as well as the system's;
+/// an unreadable or empty file is an error rather than a silent fallback.
+pub fn http_client() -> Result<reqwest::Client, NativeError> {
+    match std::env::var_os(EXTRA_CA_ENV).filter(|path| !path.is_empty()) {
+        None => http_client_with_extra_ca(None),
+        Some(path) => {
+            let pem = std::fs::read(&path).map_err(|e| {
+                NativeError::Certificate(format!("{}: {e}", std::path::Path::new(&path).display()))
+            })?;
+            http_client_with_extra_ca(Some(&pem))
+        }
+    }
+}
+
+/// [`http_client`] with the extra authorities given as a PEM bundle instead of read from the
+/// environment, for an app that keeps the authority itself. `None` trusts the system store only.
+pub fn http_client_with_extra_ca(pem: Option<&[u8]>) -> Result<reqwest::Client, NativeError> {
     // Installed once for the process; a second install changes nothing.
     let _ = rustls::crypto::ring::default_provider().install_default();
-    reqwest::Client::builder()
+    let mut builder = reqwest::Client::builder()
         .redirect(reqwest::redirect::Policy::none())
         .timeout(std::time::Duration::from_secs(10))
-        .user_agent(concat!("ruchoir-native/", env!("CARGO_PKG_VERSION")))
+        .user_agent(concat!("ruchoir-native/", env!("CARGO_PKG_VERSION")));
+    if let Some(pem) = pem {
+        let certs = reqwest::Certificate::from_pem_bundle(pem)
+            .map_err(|e| NativeError::Certificate(e.to_string()))?;
+        if certs.is_empty() {
+            return Err(NativeError::Certificate(
+                "no certificate in the PEM bundle".into(),
+            ));
+        }
+        // Merged with the platform verifier's roots, not replacing them.
+        builder = builder.tls_certs_merge(certs);
+    }
+    builder
         .build()
+        .map_err(|e| NativeError::Certificate(e.to_string()))
 }
 
 /// Whether an address may carry tokens: `https`, or `http` to this device's loopback.
@@ -58,6 +93,15 @@ pub fn secure(address: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn extra_ca_must_hold_a_certificate() {
+        assert!(super::http_client_with_extra_ca(None).is_ok());
+        assert!(matches!(
+            super::http_client_with_extra_ca(Some(b"not a certificate")),
+            Err(super::NativeError::Certificate(_))
+        ));
+    }
+
     #[test]
     fn only_https_and_loopback_are_secure() {
         assert!(super::secure("https://id.example.org"));
