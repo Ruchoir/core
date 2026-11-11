@@ -1,5 +1,5 @@
 //! A product's short grant over a file another product keeps for it (the drive's design for the
-//! files of other applications, phase 3 of the restructuring, decision of 2026-11-08).
+//! files of other applications).
 //!
 //! The chat keeps its attachments in the drive, but only the chat knows who may read one. Rather
 //! than the drive asking the chat at every download, the chat hands the person a grant: a small

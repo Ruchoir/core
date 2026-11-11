@@ -120,8 +120,8 @@ The shared libraries of Ruchoir: the Rust crates and TypeScript packages that se
 all released together under one version. A product reaches code it shares with another product only
 through a package of this repository.
 
-**Status:** being filled during the restructuring. Code comes from `Ruchoir/ruchoir` with its
-history (`git filter-repo`), moved rather than rewritten.
+**Status:** grows as the products need shared code. Code that comes from the former monolith
+(`Ruchoir/ruchoir`, now private) keeps its history (`git filter-repo`), moved rather than rewritten.
 
 ### What lives here
 

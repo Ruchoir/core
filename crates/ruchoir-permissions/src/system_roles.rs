@@ -3,7 +3,7 @@
 //! The database creates the three roles itself (the `permissions_ensure_system_roles` function of
 //! the permission foundation migration, called when a space is inserted), with the sets below
 //! written out as names; `the_system_roles_hold_the_constants` holds the two to the same values
-//! (which is all the code reads these three sets for until roles are edited, in lot 2).
+//! (which is all the code reads these three sets for until roles can be edited).
 
 use super::catalogue::{Permission, PermissionSet};
 

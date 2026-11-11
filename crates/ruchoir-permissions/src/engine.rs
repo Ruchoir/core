@@ -4,7 +4,7 @@
 //! the rules; this module only decides, and records why when asked, through the same code path,
 //! so an explanation can never disagree with the decision.
 //!
-//! The order (spec section 2, with lot 1's private lock):
+//! The order, with the lock of private channels:
 //!
 //! 1. An owner holds everything, whatever the rules (an archived channel stays read only).
 //! 2. The base role and every role held add up. A guest then loses the space-wide visibility and
@@ -545,8 +545,8 @@ mod tests {
         assert!(granted(&subject, &chain, Facts::default()).contains(ChannelView));
     }
 
-    /// Lot 1 keeps today's rule exactly: only joining opens a private channel. A reservation
-    /// naming the administrators becomes an allow on that role, and it must not let an
+    /// The engine keeps the earlier rule exactly: only joining opens a private channel. A
+    /// reservation naming the administrators becomes an allow on that role, and it must not let an
     /// administrator read a private channel they never joined.
     #[test]
     fn an_allow_rule_does_not_open_a_private_channel() {
